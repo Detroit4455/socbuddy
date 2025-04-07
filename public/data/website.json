@@ -1,0 +1,1185 @@
+[
+  {
+    "name": "OWASP",
+    "details": "The Open Web Application Security Project is an online community that produces freely-available articles, methodologies, documentation, tools, and technologies in the field of web application security.",
+    "url": "https://owasp.org/",
+    "type": "Non-profit",
+    "tags": ["web security", "application security", "community"],
+    "category": "Organizations"
+  },
+  {
+    "name": "HackerOne",
+    "details": "Vulnerability coordination and bug bounty platform that connects businesses with cybersecurity researchers.",
+    "url": "https://hackerone.com/",
+    "type": "Bug Bounty",
+    "tags": ["bug bounty", "vulnerability disclosure", "pentesting"],
+    "category": "Platforms"
+  },
+  {
+    "name": "CVE",
+    "details": "Common Vulnerabilities and Exposures is a list of publicly disclosed computer security flaws.",
+    "url": "https://cve.mitre.org/",
+    "type": "Vulnerability Database",
+    "tags": ["vulnerabilities", "database", "exploits"],
+    "category": "Resources"
+  },
+  {
+    "name": "NIST Cybersecurity Framework",
+    "details": "Guidelines, standards, and best practices to manage cybersecurity-related risk.",
+    "url": "https://www.nist.gov/cyberframework",
+    "type": "Government",
+    "tags": ["standards", "compliance", "guidelines"],
+    "category": "Frameworks"
+  },
+  {
+    "name": "Krebs on Security",
+    "details": "In-depth security news and investigation by security researcher Brian Krebs.",
+    "url": "https://krebsonsecurity.com/",
+    "type": "Blog",
+    "tags": ["news", "investigations", "cybercrime"],
+    "category": "News"
+  },
+  {
+    "name": "Have I Been Pwned",
+    "details": "Check if your email has been compromised in a data breach.",
+    "url": "https://haveibeenpwned.com/",
+    "type": "Security Tool",
+    "tags": ["breach notification", "data leaks", "passwords"],
+    "category": "Tools"
+  },
+  {
+    "name": "Virus Total",
+    "details": "Analyze suspicious files and URLs to detect types of malware.",
+    "url": "https://www.virustotal.com/",
+    "type": "Security Tool",
+    "tags": ["malware analysis", "file scanning", "threat detection"],
+    "category": "Tools"
+  },
+  {
+    "name": "Exploit Database",
+    "details": "Archive of exploits and vulnerable software.",
+    "url": "https://www.exploit-db.com/",
+    "type": "Vulnerability Database",
+    "tags": ["exploits", "vulnerabilities", "poc"],
+    "category": "Resources"
+  },
+  {
+    "name": "Bleeping Computer",
+    "details": "Information security and technology news, reviews, and help.",
+    "url": "https://www.bleepingcomputer.com/",
+    "type": "News",
+    "tags": ["malware", "ransomware", "tech news"],
+    "category": "News"
+  },
+  {
+    "name": "Cybersecurity & Infrastructure Security Agency",
+    "details": "U.S. federal agency responsible for improving cybersecurity across all levels of government and critical infrastructure.",
+    "url": "https://www.cisa.gov/",
+    "type": "Government",
+    "tags": ["threat advisories", "critical infrastructure", "federal"],
+    "category": "Organizations"
+  },
+  {
+    "name": "SecTools.org",
+    "details": "Top network security tools curated by Nmap.",
+    "url": "https://sectools.org/",
+    "type": "Security Tool",
+    "tags": ["tools list", "network security", "popular tools"],
+    "category": "Resources"
+  },
+  {
+    "name": "Dark Reading",
+    "details": "Cybersecurity news and analysis for the information security community.",
+    "url": "https://www.darkreading.com/",
+    "type": "News",
+    "tags": ["industry news", "analysis", "threat intelligence"],
+    "category": "News"
+  },
+  {
+    "name": "The Hacker News",
+    "details": "Cybersecurity news and information security.",
+    "url": "https://thehackernews.com/",
+    "type": "News",
+    "tags": ["current events", "infosec", "vulnerabilities"],
+    "category": "News"
+  },
+  {
+    "name": "Penetration Testing Execution Standard",
+    "details": "Documentation defining penetration testing methodology.",
+    "url": "http://www.pentest-standard.org/",
+    "type": "Standard",
+    "tags": ["pentesting", "methodology", "standards"],
+    "category": "Frameworks"
+  },
+  {
+    "name": "Packet Storm",
+    "details": "Collection of exploits, advisories, tools, and other content for security professionals.",
+    "url": "https://packetstormsecurity.com/",
+    "type": "Vulnerability Database",
+    "tags": ["vulnerabilities", "exploits", "tools"],
+    "category": "Resources"
+  },
+  {
+    "name": "Shodan",
+    "details": "Search engine for Internet-connected devices and systems.",
+    "url": "https://www.shodan.io/",
+    "type": "Security Tool",
+    "tags": ["reconnaissance", "IoT", "device discovery"],
+    "category": "Tools"
+  },
+  {
+    "name": "Metasploit",
+    "details": "Penetration testing framework for testing and exploiting vulnerabilities.",
+    "url": "https://www.metasploit.com/",
+    "type": "Security Tool",
+    "tags": ["exploitation", "pentesting", "framework"],
+    "category": "Tools"
+  },
+  {
+    "name": "Kali Linux",
+    "details": "Security-focused Linux distribution designed for digital forensics and penetration testing.",
+    "url": "https://www.kali.org/",
+    "type": "Operating System",
+    "tags": ["pentesting", "linux", "security tools"],
+    "category": "Tools"
+  },
+  {
+    "name": "SANS Internet Storm Center",
+    "details": "Cooperative cyber threat monitoring and alert system.",
+    "url": "https://isc.sans.edu/",
+    "type": "Threat Intelligence",
+    "tags": ["threat monitoring", "alerts", "research"],
+    "category": "Resources"
+  },
+  {
+    "name": "Wireshark",
+    "details": "The world's foremost and widely-used network protocol analyzer for network troubleshooting, analysis, software and protocol development, and education.",
+    "url": "https://www.wireshark.org/",
+    "type": "Security Tool",
+    "tags": ["network analysis", "packet capture", "protocol analyzer"],
+    "category": "Tools"
+  },
+  {
+    "name": "BugCrowd",
+    "details": "Crowdsourced security platform connecting organizations with security researchers.",
+    "url": "https://www.bugcrowd.com/",
+    "type": "Bug Bounty",
+    "tags": ["bug bounty", "vulnerability disclosure", "crowdsourced"],
+    "category": "Platforms"
+  },
+  {
+    "name": "MITRE ATT&CK",
+    "details": "Globally-accessible knowledge base of adversary tactics and techniques.",
+    "url": "https://attack.mitre.org/",
+    "type": "Framework",
+    "tags": ["threat intelligence", "tactics", "techniques"],
+    "category": "Frameworks"
+  },
+  {
+    "name": "AlienVault OTX",
+    "details": "Open Threat Exchange for sharing threat intelligence.",
+    "url": "https://otx.alienvault.com/",
+    "type": "Threat Intelligence",
+    "tags": ["threat sharing", "IOCs", "community"],
+    "category": "Resources"
+  },
+  {
+    "name": "Nmap",
+    "details": "Network discovery and security auditing tool.",
+    "url": "https://nmap.org/",
+    "type": "Security Tool",
+    "tags": ["network scanning", "enumeration", "security auditing"],
+    "category": "Tools"
+  },
+  {
+    "name": "OWASP Top 10",
+    "details": "Standard awareness document for developers and web application security, representing the most critical security risks to web applications.",
+    "url": "https://owasp.org/www-project-top-ten/",
+    "type": "Standard",
+    "tags": ["web security", "vulnerabilities", "risk"],
+    "category": "Frameworks"
+  },
+  {
+    "name": "Cybrary",
+    "details": "Free online cyber security training and career development platform.",
+    "url": "https://www.cybrary.it/",
+    "type": "Education",
+    "tags": ["training", "certification", "courses"],
+    "category": "Learning"
+  },
+  {
+    "name": "Malware Traffic Analysis",
+    "details": "Blog focused on network traffic related to malware infections.",
+    "url": "https://www.malware-traffic-analysis.net/",
+    "type": "Blog",
+    "tags": ["malware", "traffic analysis", "forensics"],
+    "category": "Resources"
+  },
+  {
+    "name": "Burp Suite",
+    "details": "Integrated platform for web application security testing.",
+    "url": "https://portswigger.net/burp",
+    "type": "Security Tool",
+    "tags": ["web security", "pentesting", "proxy"],
+    "category": "Tools"
+  },
+  {
+    "name": "NIST NVD",
+    "details": "U.S. government repository of standards-based vulnerability management data.",
+    "url": "https://nvd.nist.gov/",
+    "type": "Vulnerability Database",
+    "tags": ["CVE", "vulnerabilities", "scoring"],
+    "category": "Resources"
+  },
+  {
+    "name": "DefCon",
+    "details": "One of the world's largest and oldest annual hacking conferences.",
+    "url": "https://defcon.org/",
+    "type": "Conference",
+    "tags": ["hacking", "conference", "community"],
+    "category": "Events"
+  },
+  {
+    "name": "Black Hat",
+    "details": "Cybersecurity conference providing security consulting, training, and briefings to hackers, corporations, and government agencies.",
+    "url": "https://www.blackhat.com/",
+    "type": "Conference",
+    "tags": ["security", "conference", "training"],
+    "category": "Events"
+  },
+  {
+    "name": "Zerodium",
+    "details": "Premium zero-day acquisition platform for high-end zero-day vulnerabilities with exceptional payouts.",
+    "url": "https://zerodium.com/",
+    "type": "Bug Bounty",
+    "tags": ["zero-day", "vulnerability market", "exploits"],
+    "category": "Platforms"
+  },
+  {
+    "name": "John the Ripper",
+    "details": "Password security auditing and password recovery tool.",
+    "url": "https://www.openwall.com/john/",
+    "type": "Security Tool",
+    "tags": ["password cracking", "auditing", "recovery"],
+    "category": "Tools"
+  },
+  {
+    "name": "Aircrack-ng",
+    "details": "Network software suite for assessing WiFi network security.",
+    "url": "https://www.aircrack-ng.org/",
+    "type": "Security Tool",
+    "tags": ["wireless", "wifi security", "network"],
+    "category": "Tools"
+  },
+  {
+    "name": "ThreatConnect",
+    "details": "Security operations and threat intelligence platform.",
+    "url": "https://threatconnect.com/",
+    "type": "Platform",
+    "tags": ["threat intelligence", "security operations", "orchestration"],
+    "category": "Platforms"
+  },
+  {
+    "name": "CIS Benchmarks",
+    "details": "Best practices for secure configuration of systems.",
+    "url": "https://www.cisecurity.org/cis-benchmarks/",
+    "type": "Standard",
+    "tags": ["configuration", "hardening", "compliance"],
+    "category": "Frameworks"
+  },
+  {
+    "name": "PhishTank",
+    "details": "Community-based phishing site detection and reporting service.",
+    "url": "https://phishtank.com/",
+    "type": "Security Tool",
+    "tags": ["phishing", "community", "reporting"],
+    "category": "Tools"
+  },
+  {
+    "name": "Awesome Hacking",
+    "details": "A collection of awesome hacking lists, tools, and resources.",
+    "url": "https://github.com/Hack-with-Github/Awesome-Hacking",
+    "type": "Resource Collection",
+    "tags": ["github", "hacking", "tools collection"],
+    "category": "Resources"
+  },
+  {
+    "name": "SANS Reading Room",
+    "details": "Research papers in information security covering topics from auditing to wireless security.",
+    "url": "https://www.sans.org/reading-room/",
+    "type": "Education",
+    "tags": ["research", "papers", "whitepapers"],
+    "category": "Learning"
+  },
+  {
+    "name": "Security Onion",
+    "details": "Free and open Linux distribution for threat hunting, security monitoring, and log management.",
+    "url": "https://securityonionsolutions.com/",
+    "type": "Operating System",
+    "tags": ["monitoring", "IDS", "log management"],
+    "category": "Tools"
+  },
+  {
+    "name": "Offensive Security",
+    "details": "Provider of information security training and certification for IT professionals.",
+    "url": "https://www.offensive-security.com/",
+    "type": "Education",
+    "tags": ["training", "certification", "OSCP"],
+    "category": "Learning"
+  },
+  {
+    "name": "Vulnhub",
+    "details": "Provides materials allowing anyone to gain practical hands-on experience with digital security.",
+    "url": "https://www.vulnhub.com/",
+    "type": "Education",
+    "tags": ["practice", "CTF", "vulnerable machines"],
+    "category": "Learning"
+  },
+  {
+    "name": "OONI",
+    "details": "Open Observatory of Network Interference, global observation network for detecting censorship, surveillance, and traffic manipulation.",
+    "url": "https://ooni.org/",
+    "type": "Security Tool",
+    "tags": ["censorship", "network monitoring", "surveillance"],
+    "category": "Tools"
+  },
+  {
+    "name": "EC-Council",
+    "details": "Organizations that provides information security education, certification, and training programs.",
+    "url": "https://www.eccouncil.org/",
+    "type": "Education",
+    "tags": ["certification", "training", "ethical hacking"],
+    "category": "Learning"
+  },
+  {
+    "name": "ISACA",
+    "details": "International professional association focused on IT governance.",
+    "url": "https://www.isaca.org/",
+    "type": "Non-profit",
+    "tags": ["governance", "audit", "certification"],
+    "category": "Organizations"
+  },
+  {
+    "name": "Security Weekly",
+    "details": "Security podcast covering IT security news, vulnerabilities, hacking, and research.",
+    "url": "https://securityweekly.com/",
+    "type": "Podcast",
+    "tags": ["podcast", "news", "interviews"],
+    "category": "News"
+  },
+  {
+    "name": "SANS Institute",
+    "details": "Research and education organization for security professionals.",
+    "url": "https://www.sans.org/",
+    "type": "Education",
+    "tags": ["training", "certification", "research"],
+    "category": "Learning"
+  },
+  {
+    "name": "AttackerKB",
+    "details": "Community-driven vulnerability assessment platform.",
+    "url": "https://attackerkb.com/",
+    "type": "Vulnerability Database",
+    "tags": ["vulnerability assessment", "community", "security research"],
+    "category": "Resources"
+  },
+  {
+    "name": "Maltego",
+    "details": "Interactive data mining tool for finding relationships between data for investigations and OSINT.",
+    "url": "https://www.maltego.com/",
+    "type": "Security Tool",
+    "tags": ["OSINT", "data mining", "intelligence"],
+    "category": "Tools"
+  },
+  {
+    "name": "TryHackMe",
+    "details": "Online platform for learning and teaching cybersecurity through hands-on exercises.",
+    "url": "https://tryhackme.com/",
+    "type": "Education",
+    "tags": ["learning", "hands-on", "CTF"],
+    "category": "Learning"
+  },
+  {
+    "name": "Mandiant",
+    "details": "Security company offering incident response and cybersecurity consulting services.",
+    "url": "https://www.mandiant.com/",
+    "type": "Company",
+    "tags": ["incident response", "threat intelligence", "consulting"],
+    "category": "Organizations"
+  },
+  {
+    "name": "CrowdStrike",
+    "details": "Cybersecurity technology company specializing in endpoint protection and threat intelligence.",
+    "url": "https://www.crowdstrike.com/",
+    "type": "Company",
+    "tags": ["endpoint protection", "threat intelligence", "incident response"],
+    "category": "Organizations"
+  },
+  {
+    "name": "HackTheBox",
+    "details": "Online platform to test and advance your skills in penetration testing and cybersecurity.",
+    "url": "https://www.hackthebox.eu/",
+    "type": "Education",
+    "tags": ["pentesting", "practice", "CTF"],
+    "category": "Learning"
+  },
+  {
+    "name": "Digital Forensics Framework",
+    "details": "Open-source computer forensics platform.",
+    "url": "https://github.com/arxsys/dff",
+    "type": "Security Tool",
+    "tags": ["forensics", "investigation", "open-source"],
+    "category": "Tools"
+  },
+  {
+    "name": "Volatility Framework",
+    "details": "Memory forensics framework for incident response and malware analysis.",
+    "url": "https://www.volatilityfoundation.org/",
+    "type": "Security Tool",
+    "tags": ["memory forensics", "malware analysis", "incident response"],
+    "category": "Tools"
+  },
+  {
+    "name": "Security BSides",
+    "details": "Series of community-driven information security conferences.",
+    "url": "http://www.securitybsides.com/",
+    "type": "Conference",
+    "tags": ["community", "conference", "local events"],
+    "category": "Events"
+  },
+  {
+    "name": "ICS-CERT",
+    "details": "Industrial Control Systems Cyber Emergency Response Team.",
+    "url": "https://www.cisa.gov/ics-cert",
+    "type": "Government",
+    "tags": ["ICS", "SCADA", "critical infrastructure"],
+    "category": "Organizations"
+  },
+  {
+    "name": "Hashcat",
+    "details": "Advanced password recovery tool.",
+    "url": "https://hashcat.net/",
+    "type": "Security Tool",
+    "tags": ["password cracking", "recovery", "hash"],
+    "category": "Tools"
+  },
+  {
+    "name": "CSA - Cloud Security Alliance",
+    "details": "Organization dedicated to defining and raising awareness of best practices for secure cloud computing environments.",
+    "url": "https://cloudsecurityalliance.org/",
+    "type": "Non-profit",
+    "tags": ["cloud security", "best practices", "standards"],
+    "category": "Organizations"
+  },
+  {
+    "name": "Snyk",
+    "details": "Developer security platform to find and fix vulnerabilities in code, dependencies, containers, and infrastructure as code.",
+    "url": "https://snyk.io/",
+    "type": "Security Tool",
+    "tags": ["DevSecOps", "vulnerability scanning", "code security"],
+    "category": "Tools"
+  },
+  {
+    "name": "Pentest-Tools.com",
+    "details": "Online penetration testing tools for web applications.",
+    "url": "https://pentest-tools.com/",
+    "type": "Security Tool",
+    "tags": ["web pentesting", "vulnerability scanning", "online tools"],
+    "category": "Tools"
+  },
+  {
+    "name": "PCI Security Standards Council",
+    "details": "Global forum for the development, enhancement, storage, dissemination, and implementation of security standards for account data protection.",
+    "url": "https://www.pcisecuritystandards.org/",
+    "type": "Standard",
+    "tags": ["payment security", "compliance", "data protection"],
+    "category": "Organizations"
+  },
+  {
+    "name": "BlackArch Linux",
+    "details": "Arch Linux-based penetration testing distribution with over 2300 tools.",
+    "url": "https://blackarch.org/",
+    "type": "Operating System",
+    "tags": ["pentesting", "tools", "linux distro"],
+    "category": "Tools"
+  },
+  {
+    "name": "JPCERT/CC",
+    "details": "Japan Computer Emergency Response Team Coordination Center.",
+    "url": "https://www.jpcert.or.jp/english/",
+    "type": "CERT",
+    "tags": ["incident response", "coordination", "Japan"],
+    "category": "Organizations"
+  },
+  {
+    "name": "CTFtime",
+    "details": "CTF events listing and team ratings.",
+    "url": "https://ctftime.org/",
+    "type": "Resource",
+    "tags": ["CTF", "competitions", "rankings"],
+    "category": "Resources"
+  },
+  {
+    "name": "BrowserLeaks",
+    "details": "A comprehensive browser fingerprinting and privacy testing service that helps users understand what kind of information their browser reveals about them and their system.",
+    "url": "https://browserleaks.com/",
+    "type": "Security Tool",
+    "tags": ["privacy", "browser fingerprinting", "security testing"],
+    "category": "Tools"
+  },
+  {
+    "name": "CavalierGPT by Hudson Rock",
+    "details": "A tool for detecting AI-generated content and potential security risks in text, helping organizations protect against AI-based threats and maintain content authenticity.",
+    "url": "http://www.hudsonrock.com/cavaliergpt",
+    "type": "Security Tool",
+    "tags": ["AI detection", "content analysis", "threat detection"],
+    "category": "Tools"
+  },
+  {
+    "name": "FotoForensics",
+    "details": "Digital image forensics tool that helps detect photo manipulations, analyze metadata, and perform error level analysis on images.",
+    "url": "https://fotoforensics.com/",
+    "type": "Security Tool",
+    "tags": ["image forensics", "photo analysis", "digital forensics"],
+    "category": "Tools"
+  },
+  {
+    "name": "NetworkChuck",
+    "details": "YouTube channel providing educational content about networking, cybersecurity, and technology.",
+    "url": "https://www.youtube.com/user/NetworkChuck",
+    "type": "Education",
+    "tags": ["networking", "cybersecurity", "tutorials"],
+    "category": "Learning"
+  },
+  {
+    "name": "David Bombal",
+    "details": "Cybersecurity educator and content creator offering tutorials on ethical hacking and networking.",
+    "url": "https://www.youtube.com/c/DavidBombal",
+    "type": "Education",
+    "tags": ["ethical hacking", "networking", "tutorials"],
+    "category": "Learning"
+  },
+  {
+    "name": "JustDeleteMe",
+    "details": "Directory of direct links to delete your account from web services.",
+    "url": "https://justdeleteme.xyz/",
+    "type": "Privacy Tool",
+    "tags": ["privacy", "account deletion", "data removal"],
+    "category": "Tools"
+  },
+  {
+    "name": "Google Lens",
+    "details": "AI-powered visual search tool for identifying objects, text, and landmarks.",
+    "url": "https://lens.google/",
+    "type": "AI Tool",
+    "tags": ["image recognition", "visual search", "AI"],
+    "category": "Tools"
+  },
+  {
+    "name": "OSINT Rocks",
+    "details": "Collection of OSINT tools and resources for open-source intelligence gathering.",
+    "url": "https://osint.rocks/",
+    "type": "OSINT",
+    "tags": ["intelligence", "investigation", "research"],
+    "category": "Resources"
+  },
+  {
+    "name": "GAU",
+    "details": "Get All URLs - Fast tool to crawl and extract URLs from websites.",
+    "url": "https://github.com/lc/gau",
+    "type": "Security Tool",
+    "tags": ["url extraction", "crawling", "reconnaissance"],
+    "category": "Tools"
+  },
+  {
+    "name": "Binary Ninja",
+    "details": "Advanced binary analysis platform for reverse engineering.",
+    "url": "https://binary.ninja/",
+    "type": "Security Tool",
+    "tags": ["reverse engineering", "binary analysis", "decompilation"],
+    "category": "Tools"
+  },
+  {
+    "name": "HackTricks",
+    "details": "Extensive collection of hacking techniques, tools, and methodologies.",
+    "url": "https://book.hacktricks.wiki/en/index.html",
+    "type": "Resource",
+    "tags": ["hacking", "pentesting", "methodology"],
+    "category": "Resources"
+  },
+  {
+    "name": "Geospy.ai",
+    "details": "AI-powered geolocation and OSINT tool for image analysis.",
+    "url": "https://geospy.ai/",
+    "type": "OSINT",
+    "tags": ["geolocation", "image analysis", "AI"],
+    "category": "Tools"
+  },
+  {
+    "name": "InfoSec Machines",
+    "details": "Platform for learning and practicing cybersecurity skills.",
+    "url": "https://infosecmachines.io/",
+    "type": "Education",
+    "tags": ["learning", "practice", "machines"],
+    "category": "Learning"
+  },
+  {
+    "name": "IDA Pro",
+    "details": "Professional-grade disassembler and debugger for reverse engineering.",
+    "url": "https://www.hex-rays.com/products/ida/",
+    "type": "Security Tool",
+    "tags": ["reverse engineering", "disassembly", "debugging"],
+    "category": "Tools"
+  },
+  {
+    "name": "MetroFlip",
+    "details": "Flipper Zero application for interacting with metro and transit systems.",
+    "url": "https://lab.flipper.net/apps/metroflip",
+    "type": "Hardware Tool",
+    "tags": ["flipper zero", "transit", "hardware"],
+    "category": "Tools"
+  },
+  {
+    "name": "OverTheWire Bandit",
+    "details": "Interactive wargame for learning Linux and basic security concepts.",
+    "url": "https://overthewire.org/wargames/bandit/bandit0.html",
+    "type": "Education",
+    "tags": ["linux", "wargame", "learning"],
+    "category": "Learning"
+  },
+  {
+    "name": "OSINT Map",
+    "details": "Interactive map of OSINT tools and resources.",
+    "url": "https://cybdetective.com/osintmap",
+    "type": "OSINT",
+    "tags": ["mapping", "intelligence", "resources"],
+    "category": "Resources"
+  },
+  {
+    "name": "Pwn4Love",
+    "details": "Platform for learning and practicing penetration testing skills.",
+    "url": "https://www.pwn4love.com/",
+    "type": "Education",
+    "tags": ["pentesting", "learning", "practice"],
+    "category": "Learning"
+  },
+  {
+    "name": "Radare2",
+    "details": "Advanced framework for reverse engineering and binary analysis.",
+    "url": "https://github.com/radareorg/radare2",
+    "type": "Security Tool",
+    "tags": ["reverse engineering", "binary analysis", "framework"],
+    "category": "Tools"
+  },
+  {
+    "name": "DumpZilla",
+    "details": "Tool for extracting and analyzing Firefox and Chrome browser data.",
+    "url": "https://github.com/Busindre/dumpzilla",
+    "type": "Security Tool",
+    "tags": ["browser analysis", "forensics", "data extraction"],
+    "category": "Tools"
+  },
+  {
+    "name": "Tails",
+    "details": "Privacy-focused operating system for secure and anonymous computing.",
+    "url": "https://tails.boum.org/",
+    "type": "Operating System",
+    "tags": ["privacy", "anonymity", "security"],
+    "category": "Tools"
+  },
+  {
+    "name": "CodeForces",
+    "details": "Competitive programming platform with security challenges.",
+    "url": "https://codeforces.com/",
+    "type": "Education",
+    "tags": ["programming", "competition", "learning"],
+    "category": "Learning"
+  },
+  {
+    "name": "HackTheBox Academy",
+    "details": "Online platform for learning penetration testing and cybersecurity.",
+    "url": "https://academy.hackthebox.com/",
+    "type": "Education",
+    "tags": ["pentesting", "learning", "certification"],
+    "category": "Learning"
+  },
+  {
+    "name": "NightShade",
+    "details": "Tool for analyzing and manipulating network traffic patterns.",
+    "url": "https://github.com/akama/NightShade",
+    "type": "Security Tool",
+    "tags": ["network analysis", "traffic manipulation", "security"],
+    "category": "Tools"
+  },
+  {
+    "name": "Epieos",
+    "details": "OSINT tool for analyzing and extracting information from various online sources.",
+    "url": "https://epieos.com/",
+    "type": "OSINT",
+    "tags": ["intelligence", "investigation", "data extraction"],
+    "category": "Tools"
+  },
+  {
+    "name": "OSINT Framework",
+    "details": "Collection of OSINT tools and resources organized by category.",
+    "url": "https://osintframework.com/",
+    "type": "OSINT",
+    "tags": ["intelligence", "tools", "resources"],
+    "category": "Resources"
+  },
+  {
+    "name": "PimEyes",
+    "details": "Facial recognition search engine for finding images of people online.",
+    "url": "https://pimeyes.com/en",
+    "type": "OSINT",
+    "tags": ["facial recognition", "image search", "investigation"],
+    "category": "Tools"
+  },
+  {
+    "name": "HackThisSite CTF Writeups",
+    "details": "Collection of CTF writeups and solutions from HackThisSite challenges.",
+    "url": "https://github.com/HackThisSite/CTF-Writeups",
+    "type": "Education",
+    "tags": ["CTF", "writeups", "learning"],
+    "category": "Resources"
+  },
+  {
+    "name": "Guardey",
+    "details": "Cybersecurity platform for threat detection and response.",
+    "url": "https://www.guardey.com/",
+    "type": "Security Platform",
+    "tags": ["threat detection", "security", "monitoring"],
+    "category": "Platforms"
+  },
+  {
+    "name": "Gravwell Community Edition",
+    "details": "Open-source log aggregation and analysis platform.",
+    "url": "https://www.gravwell.io/gravwell-community-edition-plan",
+    "type": "Security Tool",
+    "tags": ["log analysis", "SIEM", "monitoring"],
+    "category": "Tools"
+  },
+  {
+    "name": "Holehe",
+    "details": "Tool for checking email addresses across various platforms.",
+    "url": "https://github.com/megadose/holehe",
+    "type": "OSINT",
+    "tags": ["email verification", "reconnaissance", "investigation"],
+    "category": "Tools"
+  },
+  {
+    "name": "WhatsMyName",
+    "details": "Username enumeration across various websites and platforms.",
+    "url": "https://whatsmyname.app/",
+    "type": "OSINT",
+    "tags": ["username search", "reconnaissance", "investigation"],
+    "category": "Tools"
+  },
+  {
+    "name": "NFC Magic",
+    "details": "Flipper Zero application for NFC card emulation and analysis.",
+    "url": "https://lab.flipper.net/apps/nfc_magic",
+    "type": "Hardware Tool",
+    "tags": ["NFC", "flipper zero", "hardware"],
+    "category": "Tools"
+  },
+  {
+    "name": "MifareClassicTool",
+    "details": "Tool for reading, writing, and analyzing Mifare Classic RFID cards.",
+    "url": "https://github.com/ikarus23/MifareClassicTool",
+    "type": "Security Tool",
+    "tags": ["RFID", "card analysis", "hardware"],
+    "category": "Tools"
+  },
+  {
+    "name": "PortSwigger Web Security Academy",
+    "details": "Free online training platform for web security and penetration testing.",
+    "url": "https://portswigger.net/web-security/learning-paths",
+    "type": "Education",
+    "tags": ["web security", "pentesting", "learning"],
+    "category": "Learning"
+  },
+  {
+    "name": "USB Rubber Ducky",
+    "details": "Programmable keystroke injection tool for penetration testing.",
+    "url": "https://shop.hak5.org/products/usb-rubber-ducky",
+    "type": "Hardware Tool",
+    "tags": ["pentesting", "hardware", "keystroke injection"],
+    "category": "Tools"
+  },
+  {
+    "name": "Kali Linux",
+    "details": "Advanced penetration testing Linux distribution.",
+    "url": "https://www.kali.org/",
+    "type": "Operating System",
+    "tags": ["pentesting", "linux", "security tools"],
+    "category": "Tools"
+  },
+  {
+    "name": "John the Ripper",
+    "details": "Password cracking and security auditing tool.",
+    "url": "http://www.openwall.com/john/",
+    "type": "Security Tool",
+    "tags": ["password cracking", "security auditing", "recovery"],
+    "category": "Tools"
+  },
+  {
+    "name": "Nmap",
+    "details": "Network exploration and security scanning tool.",
+    "url": "https://nmap.org/",
+    "type": "Security Tool",
+    "tags": ["network scanning", "security", "enumeration"],
+    "category": "Tools"
+  },
+  {
+    "name": "Hopper",
+    "details": "Binary analysis and reverse engineering tool.",
+    "url": "https://www.hopperapp.com/",
+    "type": "Security Tool",
+    "tags": ["reverse engineering", "binary analysis", "decompilation"],
+    "category": "Tools"
+  },
+  {
+    "name": "OWASP Juice Shop",
+    "details": "Intentionally insecure web application for security training.",
+    "url": "https://juice-shop.herokuapp.com/#/",
+    "type": "Education",
+    "tags": ["web security", "training", "vulnerabilities"],
+    "category": "Learning"
+  },
+  {
+    "name": "DevChallenges",
+    "details": "Platform for practicing web development and security skills.",
+    "url": "https://devchallenges.io/dashboard",
+    "type": "Education",
+    "tags": ["web development", "learning", "practice"],
+    "category": "Learning"
+  },
+  {
+    "name": "OWASP Amass",
+    "details": "Attack surface mapping and external asset discovery tool.",
+    "url": "https://github.com/OWASP/Amass",
+    "type": "Security Tool",
+    "tags": ["reconnaissance", "asset discovery", "mapping"],
+    "category": "Tools"
+  },
+  {
+    "name": "CryptoHack",
+    "details": "Platform for learning cryptography and solving crypto challenges.",
+    "url": "https://cryptohack.org/",
+    "type": "Education",
+    "tags": ["cryptography", "challenges", "learning"],
+    "category": "Learning"
+  },
+  {
+    "name": "Android",
+    "details": "Official Android platform for mobile security and development.",
+    "url": "https://www.android.com/",
+    "type": "Platform",
+    "tags": ["mobile", "security", "development"],
+    "category": "Platforms"
+  },
+  {
+    "name": "CTFlearn",
+    "details": "Platform for learning and practicing CTF challenges.",
+    "url": "https://ctflearn.com/",
+    "type": "Education",
+    "tags": ["CTF", "challenges", "learning"],
+    "category": "Learning"
+  },
+  {
+    "name": "DnsEnum",
+    "details": "DNS enumeration tool for security testing and reconnaissance.",
+    "url": "https://www.google.com/search?btnI=1&q=DnsEnum",
+    "type": "Security Tool",
+    "tags": ["DNS", "enumeration", "reconnaissance"],
+    "category": "Tools"
+  },
+  {
+    "name": "DeepDarkCTI",
+    "details": "Tool for collecting and analyzing threat intelligence from dark web sources.",
+    "url": "https://github.com/fastfire/deepdarkCTI",
+    "type": "Threat Intelligence",
+    "tags": ["dark web", "threat intelligence", "analysis"],
+    "category": "Tools"
+  },
+  {
+    "name": "CiberUnidos",
+    "details": "Cybersecurity community and resource sharing platform.",
+    "url": "https://www.linkedin.com/company/ciberunidos/posts/?feedView=all",
+    "type": "Community",
+    "tags": ["community", "networking", "resources"],
+    "category": "Organizations"
+  },
+  {
+    "name": "CompTIA Security+",
+    "details": "Professional certification for cybersecurity skills and knowledge.",
+    "url": "https://www.comptia.org/certifications/security",
+    "type": "Certification",
+    "tags": ["certification", "security", "training"],
+    "category": "Learning"
+  },
+  {
+    "name": "ElHacker",
+    "details": "Spanish cybersecurity training and resources platform.",
+    "url": "https://elhacker.info/Cursos/",
+    "type": "Education",
+    "tags": ["training", "courses", "spanish"],
+    "category": "Learning"
+  },
+  {
+    "name": "Reversing.kr",
+    "details": "Platform for reverse engineering challenges and learning.",
+    "url": "http://reversing.kr/",
+    "type": "Education",
+    "tags": ["reverse engineering", "challenges", "learning"],
+    "category": "Learning"
+  },
+  {
+    "name": "YesWeHack",
+    "details": "European bug bounty and vulnerability disclosure platform.",
+    "url": "https://www.yeswehack.com/",
+    "type": "Bug Bounty",
+    "tags": ["bug bounty", "vulnerability disclosure", "pentesting"],
+    "category": "Platforms"
+  },
+  {
+    "name": "IT Security Guru",
+    "details": "Cybersecurity news and analysis platform.",
+    "url": "https://www.itsecurityguru.org/",
+    "type": "News",
+    "tags": ["news", "analysis", "security"],
+    "category": "News"
+  },
+  {
+    "name": "Bellingcat OSM Search",
+    "details": "Open-source mapping tool for investigative journalism and research.",
+    "url": "https://osm-search.bellingcat.com/",
+    "type": "OSINT",
+    "tags": ["mapping", "investigation", "research"],
+    "category": "Tools"
+  },
+  {
+    "name": "Face Comparison Tool",
+    "details": "Tool for comparing and analyzing facial features in images.",
+    "url": "https://facecomparison.toolpie.com/",
+    "type": "OSINT",
+    "tags": ["facial recognition", "image analysis", "investigation"],
+    "category": "Tools"
+  },
+  {
+    "name": "IntelTechniques",
+    "details": "OSINT and privacy tools for online investigations.",
+    "url": "https://inteltechniques.com/",
+    "type": "OSINT",
+    "tags": ["investigation", "privacy", "tools"],
+    "category": "Resources"
+  },
+  {
+    "name": "AWS Config",
+    "details": "Cloud security and compliance management service.",
+    "url": "https://aws.amazon.com/es/config/",
+    "type": "Cloud Security",
+    "tags": ["cloud", "security", "compliance"],
+    "category": "Tools"
+  },
+  {
+    "name": "Google Earth",
+    "details": "Geospatial analysis and mapping tool.",
+    "url": "https://earth.google.com/",
+    "type": "Mapping",
+    "tags": ["geospatial", "mapping", "visualization"],
+    "category": "Tools"
+  },
+  {
+    "name": "PicoCTF",
+    "details": "Educational platform for learning cybersecurity through CTF challenges.",
+    "url": "https://play.picoctf.org/",
+    "type": "Education",
+    "tags": ["CTF", "learning", "challenges"],
+    "category": "Learning"
+  },
+  {
+    "name": "Root-Me",
+    "details": "Platform for learning and practicing penetration testing skills.",
+    "url": "https://www.root-me.org/",
+    "type": "Education",
+    "tags": ["pentesting", "learning", "challenges"],
+    "category": "Learning"
+  },
+  {
+    "name": "EnumeRannden",
+    "details": "Tool for network enumeration and reconnaissance.",
+    "url": "https://github.com/Rannden-SHA/EnumeRannden",
+    "type": "Security Tool",
+    "tags": ["enumeration", "reconnaissance", "network"],
+    "category": "Tools"
+  },
+  {
+    "name": "HackTheBox Pro Labs",
+    "details": "Advanced penetration testing labs for experienced security professionals.",
+    "url": "https://www.hackthebox.com/labs",
+    "type": "Education",
+    "tags": ["pentesting", "advanced", "labs"],
+    "category": "Learning"
+  },
+  {
+    "name": "HackTheBox Starting Point",
+    "details": "Beginner-friendly penetration testing labs and challenges.",
+    "url": "https://www.hackthebox.com/starting-point",
+    "type": "Education",
+    "tags": ["pentesting", "beginner", "labs"],
+    "category": "Learning"
+  },
+  {
+    "name": "HackTheBox Fortress",
+    "details": "Advanced penetration testing environment with complex scenarios.",
+    "url": "https://www.hackthebox.com/fortress",
+    "type": "Education",
+    "tags": ["pentesting", "advanced", "fortress"],
+    "category": "Learning"
+  },
+  {
+    "name": "HackTheBox Battlegrounds",
+    "details": "Competitive penetration testing platform for team-based challenges.",
+    "url": "https://www.hackthebox.com/battlegrounds",
+    "type": "Education",
+    "tags": ["pentesting", "competition", "teams"],
+    "category": "Learning"
+  },
+  {
+    "name": "HackTheBox Endgames",
+    "details": "Advanced penetration testing scenarios simulating real-world environments.",
+    "url": "https://www.hackthebox.com/endgames",
+    "type": "Education",
+    "tags": ["pentesting", "advanced", "scenarios"],
+    "category": "Learning"
+  },
+  {
+    "name": "HackTheBox Challenges",
+    "details": "Collection of individual penetration testing challenges.",
+    "url": "https://www.hackthebox.com/challenges",
+    "type": "Education",
+    "tags": ["pentesting", "challenges", "practice"],
+    "category": "Learning"
+  },
+  {
+    "name": "HackTheBox Machines",
+    "details": "Virtual machines for practicing penetration testing skills.",
+    "url": "https://www.hackthebox.com/machines",
+    "type": "Education",
+    "tags": ["pentesting", "machines", "practice"],
+    "category": "Learning"
+  },
+  {
+    "name": "HackTheBox Arena",
+    "details": "Real-time penetration testing environment for live practice.",
+    "url": "https://www.hackthebox.com/arena",
+    "type": "Education",
+    "tags": ["pentesting", "live", "practice"],
+    "category": "Learning"
+  },
+  {
+    "name": "HackTheBox Business CTF",
+    "details": "Corporate-themed capture the flag competition.",
+    "url": "https://www.hackthebox.com/business-ctf",
+    "type": "Education",
+    "tags": ["CTF", "business", "competition"],
+    "category": "Learning"
+  },
+  {
+    "name": "HackTheBox University CTF",
+    "details": "Capture the flag competition for university students.",
+    "url": "https://www.hackthebox.com/university-ctf",
+    "type": "Education",
+    "tags": ["CTF", "university", "students"],
+    "category": "Learning"
+  },
+  {
+    "name": "HackTheBox Battlegrounds CTF",
+    "details": "Team-based capture the flag competition.",
+    "url": "https://www.hackthebox.com/battlegrounds-ctf",
+    "type": "Education",
+    "tags": ["CTF", "teams", "competition"],
+    "category": "Learning"
+  },
+  {
+    "name": "HackTheBox Battlegrounds Pro",
+    "details": "Professional team-based penetration testing competition.",
+    "url": "https://www.hackthebox.com/battlegrounds-pro",
+    "type": "Education",
+    "tags": ["pentesting", "teams", "professional"],
+    "category": "Learning"
+  },
+  {
+    "name": "HackTheBox Battlegrounds Elite",
+    "details": "Advanced team-based penetration testing competition.",
+    "url": "https://www.hackthebox.com/battlegrounds-elite",
+    "type": "Education",
+    "tags": ["pentesting", "teams", "advanced"],
+    "category": "Learning"
+  },
+  {
+    "name": "HackTheBox Battlegrounds Rookies",
+    "details": "Beginner-friendly team-based penetration testing competition.",
+    "url": "https://www.hackthebox.com/battlegrounds-rookies",
+    "type": "Education",
+    "tags": ["pentesting", "teams", "beginner"],
+    "category": "Learning"
+  },
+  {
+    "name": "HackTheBox Battlegrounds Masters",
+    "details": "Expert-level team-based penetration testing competition.",
+    "url": "https://www.hackthebox.com/battlegrounds-masters",
+    "type": "Education",
+    "tags": ["pentesting", "teams", "expert"],
+    "category": "Learning"
+  },
+  {
+    "name": "HackTheBox Battlegrounds Veterans",
+    "details": "Veteran-level team-based penetration testing competition.",
+    "url": "https://www.hackthebox.com/battlegrounds-veterans",
+    "type": "Education",
+    "tags": ["pentesting", "teams", "veteran"],
+    "category": "Learning"
+  },
+  {
+    "name": "HackTheBox Battlegrounds Legends",
+    "details": "Legendary team-based penetration testing competition.",
+    "url": "https://www.hackthebox.com/battlegrounds-legends",
+    "type": "Education",
+    "tags": ["pentesting", "teams", "legendary"],
+    "category": "Learning"
+  },
+  {
+    "name": "HackTheBox Battlegrounds Champions",
+    "details": "Championship-level team-based penetration testing competition.",
+    "url": "https://www.hackthebox.com/battlegrounds-champions",
+    "type": "Education",
+    "tags": ["pentesting", "teams", "championship"],
+    "category": "Learning"
+  },
+  {
+    "name": "HackTheBox Battlegrounds Grandmasters",
+    "details": "Grandmaster-level team-based penetration testing competition.",
+    "url": "https://www.hackthebox.com/battlegrounds-grandmasters",
+    "type": "Education",
+    "tags": ["pentesting", "teams", "grandmaster"],
+    "category": "Learning"
+  },
+  {
+    "name": "HackTheBox Battlegrounds Hall of Fame",
+    "details": "Hall of Fame for top performers in team-based penetration testing competitions.",
+    "url": "https://www.hackthebox.com/battlegrounds-hall-of-fame",
+    "type": "Education",
+    "tags": ["pentesting", "teams", "hall of fame"],
+    "category": "Learning"
+  },  {
+    "name": "socBuddy",
+    "details": "collection for verious tools required for Security Operations Center",
+    "url": "https://socbuddy.in",
+    "type": "Security Tool",
+    "tags": ["tools"],
+    "category": "Tools"
+  }
+] 

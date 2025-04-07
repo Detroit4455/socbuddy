@@ -1,0 +1,371 @@
+[
+  {
+    "name": "Design Homepage",
+    "status": "Completed",
+    "dueDate": "2025-04-05",
+    "owner": "Aliced",
+    "detail": "Create a responsive design",
+    "expanded": false,
+    "comments": [
+      {
+        "text": "j",
+        "date": "Apr 2, 2025, 07:47 PM",
+        "timestamp": 1743603472855
+      },
+      {
+        "text": "d",
+        "date": "Apr 2, 2025, 07:41 PM",
+        "timestamp": 1743603109739
+      },
+      {
+        "text": "sadfas",
+        "date": "Apr 2, 2025, 05:22 PM",
+        "timestamp": 1743594778086
+      },
+      {
+        "text": "wil do that ",
+        "date": "Apr 2, 2025, 05:22 PM",
+        "timestamp": 1743594766682
+      }
+    ],
+    "startDate": "2025-04-02"
+  },
+  {
+    "name": "Update Database",
+    "status": "Completed",
+    "dueDate": "2025-04-03",
+    "owner": "Bob",
+    "detail": "Migration completed successfully",
+    "expanded": false,
+    "comments": [
+      {
+        "text": "ok\n",
+        "date": "Apr 2, 2025, 05:22 PM",
+        "timestamp": 1743594748111
+      }
+    ],
+    "startDate": "2025-04-02"
+  },
+  {
+    "name": "Code Review",
+    "status": "Completed",
+    "dueDate": "2025-04-06",
+    "owner": "Charlie",
+    "detail": "Review pending PRs",
+    "expanded": false,
+    "comments": [],
+    "startDate": "2025-04-02"
+  },
+  {
+    "name": "Dnyaneshwar",
+    "dueDate": "2025-04-02",
+    "owner": "D",
+    "detail": "D",
+    "comments": [
+      {
+        "text": "sdafsd",
+        "date": "Apr 2, 2025, 05:16 PM",
+        "timestamp": 1743594377337
+      }
+    ],
+    "expanded": false,
+    "startDate": "2025-04-02",
+    "status": "Completed"
+  },
+  {
+    "name": "test",
+    "dueDate": "2025-04-02",
+    "owner": "Danny",
+    "detail": "dsafasd",
+    "comments": [],
+    "expanded": false,
+    "startDate": "2025-04-02",
+    "status": "Completed"
+  },
+  {
+    "name": "test",
+    "dueDate": "2025-04-02",
+    "owner": "test",
+    "detail": "test",
+    "comments": [
+      {
+        "text": "commnet\n",
+        "date": "Apr 2, 2025, 07:33 PM",
+        "timestamp": 1743602585367
+      }
+    ],
+    "expanded": false,
+    "startDate": "2025-04-02",
+    "status": "Completed"
+  },
+  {
+    "name": "TODO Task Manger",
+    "dueDate": "2025-04-02",
+    "owner": "Danny",
+    "detail": "1. Add function to auto generate the 1 task Daily With Default activities\n",
+    "comments": [
+      {
+        "text": "d",
+        "date": "Apr 7, 2025, 05:08 PM",
+        "timestamp": 1744025886682,
+        "awaiting": true
+      },
+      {
+        "text": "If due date is passed then show that in red ",
+        "date": "Apr 3, 2025, 11:27 AM",
+        "timestamp": 1743659830202
+      },
+      {
+        "text": "Add tag in details seciton > like Idea , critical ",
+        "date": "Apr 2, 2025, 10:18 PM",
+        "timestamp": 1743612480314
+      },
+      {
+        "text": "Add other tool botton lef right ",
+        "date": "Apr 2, 2025, 07:53 PM",
+        "timestamp": 1743603823146
+      },
+      {
+        "text": "2. add the authenticaiton based specific ",
+        "date": "Apr 2, 2025, 07:51 PM",
+        "timestamp": 1743603718354
+      }
+    ],
+    "expanded": false,
+    "startDate": "2025-04-02",
+    "status": "Awaiting"
+  },
+  {
+    "name": "AWS EC2 Setup ",
+    "dueDate": "2025-04-12",
+    "owner": "Danny",
+    "detail": "Lets setup AWS for socbuddy.in \n> collect all nessesary task create action plan",
+    "comments": [
+      {
+        "text": "danny\n",
+        "date": "Apr 7, 2025, 04:42 PM",
+        "timestamp": 1744024328120,
+        "awaiting": false
+      },
+      {
+        "text": "Danny ",
+        "date": "Apr 7, 2025, 04:41 PM",
+        "timestamp": 1744024311548,
+        "awaiting": true
+      }
+    ],
+    "expanded": false,
+    "startDate": "2025-04-02",
+    "status": "In Progress"
+  },
+  {
+    "name": "Threate Intell UseCase ",
+    "dueDate": "2025-04-11",
+    "owner": "Danny",
+    "detail": "Threate Intell UseCase setup | figureout the final approch to start ",
+    "comments": [
+      {
+        "text": "call setup with bodhi\n",
+        "date": "Apr 7, 2025, 09:58 AM",
+        "timestamp": 1744000138989
+      }
+    ],
+    "expanded": false,
+    "startDate": "2025-04-03",
+    "status": "In Progress"
+  },
+  {
+    "name": "Cymulate Integration ",
+    "dueDate": "2025-04-04",
+    "owner": "Danny",
+    "detail": "Cymulate Integration not working Need to check and reply to aniket. ",
+    "comments": [
+      {
+        "text": "Replied to aniket to raise the tac case> date format issue",
+        "date": "Apr 3, 2025, 10:47 AM",
+        "timestamp": 1743657474463
+      }
+    ],
+    "expanded": false,
+    "startDate": "2025-04-03",
+    "status": "In Progress"
+  },
+  {
+    "name": "Filed is mising XDRC winodows",
+    "dueDate": "2025-04-03",
+    "owner": "Danny",
+    "detail": "member of field is missing in xdrc winodws logs . wheile it presenti n wec logs for ms windows ",
+    "comments": [
+      {
+        "text": "Suraj to check memer of field and confirm ",
+        "date": "Apr 3, 2025, 11:24 AM",
+        "timestamp": 1743659691912
+      },
+      {
+        "text": "infy owner. > suraj",
+        "date": "Apr 3, 2025, 11:18 AM",
+        "timestamp": 1743659308601
+      }
+    ],
+    "expanded": false,
+    "startDate": "2025-04-03",
+    "status": "In Progress"
+  },
+  {
+    "name": "Abolute Configuration",
+    "dueDate": "2025-04-11",
+    "owner": "Danny",
+    "detail": "Abolute Integration is not working > tested with postman able to authicate ",
+    "comments": [],
+    "expanded": false,
+    "startDate": "2025-04-03",
+    "status": "Pending"
+  },
+  {
+    "name": "Correlation rules are in an execution error state",
+    "dueDate": "2025-04-04",
+    "owner": "Danny",
+    "detail": "[High] 03440942\n\n-Per latest update from the Engineering Team, It appears that XQL Query review needs to be continued (intervention requested) by the Account / CSA / RE / PS Team.\n",
+    "comments": [
+      {
+        "text": "add questioner to engg team< rule were triggerring previously ",
+        "date": "Apr 4, 2025, 04:37 PM",
+        "timestamp": 1743764863825
+      },
+      {
+        "text": "| join type = left (datamodel dataset = check_point_vpn_1_firewall_1_raw  | alter origin = check_point_vpn_1_firewall_1_raw.origin | join type = left (dataset = dmz_ip_address_list ) as dmz xdm.target.ipv4 = dmz.ip_address or incidr(xdm.target.ipv4, dmz.ip_address) = true | filter (xdm.target.is_internal_ip =true or ip_address !=null)| fields xdm.observer.action as action, xdm.source.ipv4 as fw_src_ip, xdm.source.port, xdm.target.ipv4, xdm.target.is_internal_ip) as fw_events fw_events.fw_src_ip = xdm.source.ipv4",
+        "date": "Apr 3, 2025, 07:33 PM",
+        "timestamp": 1743689007989
+      }
+    ],
+    "expanded": false,
+    "startDate": "2025-04-03",
+    "status": "In Progress"
+  },
+  {
+    "name": "CCTV XDR Collector not reporting Issue ",
+    "dueDate": "2025-04-04",
+    "owner": "Danny",
+    "detail": "Need to go thorught the logs > \ncase id . 03447292",
+    "comments": [],
+    "expanded": false,
+    "startDate": "2025-04-03",
+    "status": "Pending"
+  },
+  {
+    "name": "My Notes",
+    "dueDate": "2025-05-10",
+    "owner": "Dnyaneshwar",
+    "detail": "https://jobs.paloaltonetworks.com/en/job/mumbai/customer-success-architect/47263/79517835200",
+    "comments": [],
+    "expanded": false,
+    "startDate": "2025-04-03",
+    "status": "Pending"
+  },
+  {
+    "name": "rule 479",
+    "dueDate": "2025-04-03",
+    "owner": "D",
+    "detail": "\n\nIL-P2-NIPS-096-NA-SIEM-Hacking-SuspiciousActivity-Multiple_Signature_Triggerred_From_Same_IP\n\nconfig case_sensitive = false\n| datamodel dataset = cisco_firepower_raw  \n| bin _time span = 5m\n| filter xdm.event.id = \"430001\" and xdm.source.is_internal_ip = false and incidr (xdm.source.ipv4,\"103.75.173.0/24\")=false and incidr (xdm.source.ipv4,\"205.210.31.0/24\")=false and incidr (xdm.source.ipv4,\"198.235.24.0/24\")=false\n|filter incidr (xdm.source.ipv4,\"40.92.0.0/15\")=false and incidr(xdm.source.ipv4,\"40.107.0.0/16\")= false and incidr (xdm.source.ipv4,\"52.100.0.0/14\")=false and incidr (xdm.source.ipv4,\"52.238.78.88/32\")=false and incidr (xdm.source.ipv4,\"104.47.0.0/17\")=false and incidr (xdm.source.ipv4,\"2a01:0111:f400:0000:0000:0000:0000:0000/48\")=false and incidr (xdm.source.ipv4,\"2a01:0111:f403:0000:0000:0000:0000:0000/48\")=false\n| alter device_ip = cisco_firepower_raw._final_reporting_device_ip, policy_name = xdm.event.operation\n|join type = left  (dataset = dmz_ip_address_list ) as dmz xdm.source.ipv4 = dmz.ip_address or incidr(xdm.source.ipv4, dmz.ip_address) = true | filter ip_address =null\n| join type = left (dataset = iisvascan_ip_address_list | fields ip_address as ip) as iis_scan iis_scan.ip = xdm.source.ipv4 | filter ip = null\n| join type = left  (dataset = dmz_ip_address_list ) as dmz xdm.target.ipv4 = dmz.ip_address or incidr(xdm.target.ipv4, dmz.ip_address) = true | filter (xdm.target.is_internal_ip =true or ip_address !=null)\n| fields xdm.event.id, xdm.event.type, xdm.event.log_level, xdm.observer.action, xdm.source.host.hostname, xdm.source.ipv4, xdm.source.port, xdm.event.description, xdm.alert.description, xdm.target.ipv4, xdm.target.port, xdm.network.ip_protocol , xdm.event.operation, xdm.source.application.name , xdm.source.location.country, xdm.source.asn.as_name, xdm.target.asn.as_name, _time, _insert_time, device_ip, policy_name, _vendor, _product\n| comp earliest(_time )as FirstEventTime,count() as matched_events, values(*) as * by xdm.source.ipv4\n| filter array_length(xdm.alert.description) >= 5 \n| filter matched_events >= 5\n\n| join type = left (datamodel dataset = check_point_vpn_1_firewall_1_raw  | alter origin = check_point_vpn_1_firewall_1_raw.origin\n | join type = left (dataset = dmz_ip_address_list ) as dmz xdm.target.ipv4 = dmz.ip_address or incidr(xdm.target.ipv4, dmz.ip_address) = true | filter (xdm.target.is_internal_ip =true or ip_address !=null)\n| fields xdm.observer.action as action, xdm.source.ipv4 as fw_src_ip, xdm.source.port, xdm.target.ipv4, xdm.target.is_internal_ip) as fw_events fw_events.fw_src_ip = xdm.source.ipv4\n| filter fw_src_ip != null and action =\"accept\"\n| dedup xdm.source.ipv4 \n| alter aggregation_criteria = \"ilsourceip\", event_time = format_timestamp(\"%Y-%m-%d %H:%M:%S\", firsteventtime )",
+    "comments": [
+      {
+        "text": "I modified the rule and made the copy of that ",
+        "date": "Apr 6, 2025, 11:43 PM",
+        "timestamp": 1743963220956
+      }
+    ],
+    "expanded": false,
+    "startDate": "2025-04-03",
+    "status": "In Progress"
+  },
+  {
+    "name": "Correlation Rules",
+    "dueDate": "2025-04-30",
+    "owner": "Danny",
+    "detail": "Go through all correlation Rule",
+    "comments": [],
+    "expanded": false,
+    "startDate": "2025-04-03",
+    "status": "Pending"
+  },
+  {
+    "name": "Threat feed integration",
+    "dueDate": "2025-04-04",
+    "owner": "danny ",
+    "detail": "\n> need to fwd date to other tenant",
+    "comments": [],
+    "expanded": false,
+    "startDate": "2025-04-04",
+    "status": "Pending"
+  },
+  {
+    "name": "TEMP",
+    "dueDate": "2025-04-07",
+    "owner": "D",
+    "detail": "\"\"\"Base Script for Cortex XSIAM\nThis is an empty script with some basic structure according\nto the code conventions.\nMAKE SURE YOU REVIEW/REPLACE ALL THE COMMENTS MARKED AS \"TODO\"\n\"\"\"\n\nfrom typing import Dict, Any\nimport traceback\n\n\n''' STANDALONE FUNCTION '''\n\n\n# TODO: REMOVE the following dummy function:\ndef basescript_dummy(dummy: str) -> Dict[str, str]:\n    \"\"\"Returns a simple python dict with the information provided\n    in the input (dummy).\n    :type dummy: ``str``\n    :param dummy: string to add in the dummy dict that is returned\n    :return: dict as {\"dummy\": dummy}\n    :rtype: ``str``\n    \"\"\"\n\n    return {\"dummy\": dummy}\n# TODO: ADD HERE THE FUNCTIONS TO INTERACT WITH YOUR PRODUCT API\n\n\n''' COMMAND FUNCTION '''\n\n\n# TODO: REMOVE the following dummy command function\ndef basescript_dummy_command(args: Dict[str, Any]) -> CommandResults:\n\n    dummy = args.get('dummy', 'example dummy')\n    \n    if not dummy:\n        raise ValueError('dummy not specified')\n\n    # Call the standalone function and get the raw response\n    result = basescript_dummy(dummy)\n\n    return CommandResults(\n        outputs_prefix='BaseScript',\n        outputs_key_field='',\n        outputs=result,\n    )\n# TODO: ADD additional command functions that translate Cortex XSIAM inputs/outputs\n\n\n''' MAIN FUNCTION '''\n\n\ndef main():\n    try:\n        # TODO: replace the invoked command function with yours\n        return_results(basescript_dummy_command(demisto.args()))\n    except Exception as ex:\n        demisto.error(traceback.format_exc())  # print the traceback\n        return_error(f'Failed to execute BaseScript. Error: {str(ex)}')\n\n\n''' ENTRY POINT '''\n\n\nif __name__ in ('__main__', '__builtin__', 'builtins'):\n    main()\n\n",
+    "comments": [
+      {
+        "text": "d",
+        "date": "Apr 7, 2025, 04:49 PM",
+        "timestamp": 1744024787179,
+        "awaiting": true
+      },
+      {
+        "text": "Updated DateTime Funciotn > \"\"\"Base Script for Cortex XSIAM\nThis is an empty script with some basic structure according\nto the code conventions.\nMAKE SURE YOU REVIEW/REPLACE ALL THE COMMENTS MARKED AS \"TODO\"\n\"\"\"\n\nfrom typing import Dict, Any\nimport traceback\nfrom datetime import datetime\n\n\n''' STANDALONE FUNCTION '''\n\n\ndef basescript_dummy(dummy: str) -> Dict[str, Any]:\n    \"\"\"Returns a python dict with the information provided\n    in the input (dummy) and today's date.\n    :type dummy: ``str``\n    :param dummy: string to add in the dummy dict that is returned\n    :return: dict as {\"dummy\": dummy, \"date\": today's_date}\n    :rtype: ``Dict[str, Any]``\n    \"\"\"\n    today_date = datetime.now().strftime(\"%Y-%m-%d\")\n    return {\"dummy\": dummy, \"date\": today_date}\n\n\n''' COMMAND FUNCTION '''\n\n\ndef basescript_dummy_command(args: Dict[str, Any]) -> CommandResults:\n    dummy = args.get('dummy', 'example dummy')\n\n    if not dummy:\n        raise ValueError('dummy not specified')\n\n    # Call the standalone function and get the raw response\n    result = basescript_dummy(dummy)\n\n    return CommandResults(\n        outputs_prefix='BaseScript',\n        outputs_key_field='',\n        outputs=result,\n    )\n\n\n''' MAIN FUNCTION '''\n\n\ndef main():\n    try:\n        # TODO: replace the invoked command function with yours\n        return_results(basescript_dummy_command(demisto.args()))\n    except Exception as ex:\n        demisto.error(traceback.format_exc())  # print the traceback\n        return_error(f'Failed to execute BaseScript. Error: {str(ex)}')\n\n\n''' ENTRY POINT '''\n\n\nif __name__ in ('__main__', '__builtin__', 'builtins'):\n    main()\n",
+        "date": "Apr 6, 2025, 11:48 PM",
+        "timestamp": 1743963531117
+      }
+    ],
+    "expanded": false,
+    "startDate": "2025-04-06",
+    "status": "Completed"
+  },
+  {
+    "name": "DMZ IP to Data",
+    "dueDate": "2025-04-08",
+    "owner": "Danny",
+    "detail": "Get DMZ IP TO dataset via file based colleciton\n",
+    "comments": [
+      {
+        "text": "Abhishek to check the csv file and filesize . it more that 30 mb \n",
+        "date": "Apr 7, 2025, 06:10 PM",
+        "timestamp": 1744029607204,
+        "awaiting": true
+      }
+    ],
+    "expanded": false,
+    "startDate": "2025-04-07",
+    "status": "Awaiting"
+  },
+  {
+    "name": "test",
+    "dueDate": "2025-04-07",
+    "owner": "Danny",
+    "detail": "d",
+    "comments": [],
+    "expanded": false,
+    "startDate": "2025-04-07",
+    "status": "Pending",
+    "taskId": "TASK-1744025326851"
+  },
+  {
+    "name": "TEsT Correlation rules are in an execution error state\tCorrelation rules are in an execution error state\t",
+    "dueDate": "2025-04-07",
+    "owner": "dass",
+    "detail": "sdfasd",
+    "comments": [],
+    "expanded": false,
+    "startDate": "2025-04-07",
+    "status": "Pending"
+  },
+  {
+    "name": "New Feature Request Large Upload (HTTPS).",
+    "dueDate": "2025-04-09",
+    "owner": "Danny",
+    "detail": "We have requirement for below mentioned rules where we want a new custom field to be added as filter. In this custom field we want the numeric value of uploaded/downloaded data to get fetched in the alerts table.\n\n \n\nRule Name:\n\nLarge Upload (HTTPS).\nLarge Upload (Generic).",
+    "comments": [],
+    "expanded": false,
+    "startDate": "2025-04-07",
+    "status": "Pending"
+  }
+]

@@ -1,0 +1,256 @@
+2025-03-31T15:51:13.363Z ::ffff:192.168.1.201 [indicator_extractor] Action: extract_from_text, Content: {
+  "cybersecurity_websites": [
+    {
+      "name": "OWASP",
+      "type": "Organization",
+      "de...
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-03-31T15:51:26.430Z ::ffff:192.168.1.201 [grab_redirect_url] Action: grab_url, URL: HTTPS://google.com
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-03-31T15:59:32.694Z ::ffff:192.168.1.201 [indicator_extractor] Status: Success Action: extract_from_url, Content: googel.com
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-03-31T15:59:32.900Z ::ffff:192.168.1.201 [indicator_extractor] Status: Failure Action: extract_from_url, Content: googel.com
+Error: [Action: extract_from_url, Content: googel.com] > Invalid URL format
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-03-31T15:59:32.902Z ::ffff:192.168.1.201 [indicator_extractor] Status: Failure Action: extraction_failed, Content: googel.com
+Error: [Action: extraction_failed, Content: googel.com] > Invalid URL format
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-03-31T16:01:34.440Z ::ffff:192.168.1.201 [base64] Status: Success Action: decode, Content: adf
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-03-31T16:01:38.990Z ::ffff:192.168.1.201 [base64] Status: Success Action: decode, Content: adfdfasdfsad
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-03-31T16:01:43.926Z ::ffff:192.168.1.201 [base64] Status: Success Action: decode, Content: fhgdafsd
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-03-31T16:01:49.923Z ::ffff:192.168.1.201 [grab_redirect_url] Status: Success Action: grab_url, URL: fasdfas
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-03-31T16:01:49.963Z ::ffff:192.168.1.201 [grab_redirect_url] Status: Failure Action: grab_url, URL: fasdfas
+Error: [Action: grab_url, URL: fasdfas] > Invalid URL format
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-03-31T16:02:23.726Z ::ffff:192.168.1.201 [grab_redirect_url] Status: Success Action: grab_url, URL: fb.com
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-03-31T16:02:23.756Z ::ffff:192.168.1.201 [grab_redirect_url] Status: Failure Action: grab_url, URL: fb.com
+Error: [Action: grab_url, URL: fb.com] > Invalid URL format
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-03-31T16:06:29.816Z ::ffff:192.168.1.201 [grab_redirect_url] Status: Failure Action: grab_url, URL: fd.com
+Error: [Action: grab_url, URL: fd.com] > Invalid URL format
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-03-31T16:06:55.017Z ::ffff:192.168.1.201 [grab_redirect_url] Status: Success Action: grab_url, URL: https://facebook.com
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-03-31T16:07:48.241Z ::ffff:192.168.1.201 [base64] Status: Success Action: decode, Content: 
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-03-31T16:07:49.123Z ::ffff:192.168.1.201 [base64] Status: Success Action: encode, Content: 
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-03-31T16:12:51.873Z ::ffff:192.168.1.201 [base64] Status: Success Action: decode, Content: 
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-03-31T16:12:52.410Z ::ffff:192.168.1.201 [base64] Status: Success Action: encode, Content: 
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-03-31T16:15:22.153Z ::ffff:192.168.1.201 [grab_redirect_url] Status: Failure Action: grab_url, URL: 
+Error: [Action: grab_url, URL: ] > URL is required
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-03-31T18:09:51.194Z | cybersecurity-resources | "ip2geto" | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T03:46:24.506Z | cybersecurity-resources | "Pho" | Mozilla/5.0 (iPhone; CPU iPhone OS 18_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/134.0.6998.99 Mobile/15E148 Safari/604.1
+2025-04-01T03:46:28.394Z | cybersecurity-resources | "Phishing" | Mozilla/5.0 (iPhone; CPU iPhone OS 18_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/134.0.6998.99 Mobile/15E148 Safari/604.1
+2025-04-01T03:56:59.741Z | cybersecurity-resources | "The atomic we" | Mozilla/5.0 (iPhone; CPU iPhone OS 18_1_1 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) CriOS/134.0.6998.99 Mobile/15E148 Safari/604.1
+2025-04-01T04:26:24.040Z | cybersecurity-resources | "vir" | Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T05:04:59.318Z | cybersecurity-resources | "audit" | Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T05:08:35.094Z | cybersecurity-resources | "j" | Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T05:11:21.362Z | cybersecurity-resources | "cor" | Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T05:13:19.676Z | cybersecurity-resources | "cve" | Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T05:13:33.883Z | cybersecurity-resources | "phi" | Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T05:13:43.563Z | cybersecurity-resources | "ioc" | Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T05:13:49.921Z | cybersecurity-resources | "tools" | Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T05:21:47.716Z | cybersecurity-resources | "500" | Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T05:21:51.900Z | cybersecurity-resources | "f" | Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T10:30:58.334Z ::ffff:192.168.1.201 [indicator_extractor] Status: Success Action: extract_from_text, Content: 0
+: 
+"https://discord.gg/HhjhQgnp54"
+1
+: 
+"https://www.linkedin.com/company/cybersources/"
+2
+: 
+"htt...
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-01T10:39:26.720Z | cybersecurity-resources | "image" | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T10:51:44.239Z ::ffff:192.168.1.201 [indicator_extractor] Status: Success Action: extract_from_text, Content: [
+  {
+    "name": "OWASP",
+    "details": "The Open Web Application Security Project is an online co...
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-01T10:53:07.112Z | cybersecurity-resources | "ip" | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T10:53:17.037Z | cybersecurity-resources | "ip" | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T10:53:24.593Z | cybersecurity-resources | "viru" | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T11:30:02.149Z | cybersecurity-resources | "c" | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T11:30:04.538Z | cybersecurity-resources | "cv" | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T11:30:12.099Z | cybersecurity-resources | "sc" | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T11:30:14.617Z | cybersecurity-resources | "scoring" | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T11:30:22.179Z | cybersecurity-resources | "in-dep" | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T11:30:26.489Z | cybersecurity-resources | "news" | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T11:31:03.259Z | cybersecurity-resources | "virus" | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T11:33:44.430Z | cybersecurity-resources | "soc" | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T11:50:39.133Z ::ffff:192.168.1.201 [base64] Status: Success Action: encode, Content: 
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-01T11:51:13.296Z | cybersecurity-resources | "h" | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T11:51:51.150Z | cybersecurity-resources | "tool" | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T12:48:21.324Z | cybersecurity-resources | "ioc" | Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T13:07:39.706Z | cybersecurity-resources | "sdfasa" | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T13:15:02.849Z ::ffff:192.168.1.201 [base64] Status: Success Action: decode, Content: 
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-01T16:42:24.807Z | cybersecurity-resources | "ip" | Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T16:43:57.928Z | cybersecurity-resources | "url " | Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T17:11:48.273Z | cybersecurity-resources | "url" | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T17:51:58.025Z | cybersecurity-resources | "vi" | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T17:51:59.357Z | cybersecurity-resources | "vir" | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-01T17:52:06.506Z | cybersecurity-resources | "j" | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-02T05:08:50.826Z ::ffff:192.168.1.4 [indicator_extractor] Status: Success Action: extract_from_url, Content: http://socbuddy.in/
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T05:09:43.049Z ::ffff:192.168.1.4 [indicator_extractor] Status: Success Action: extract_from_url, Content: http://socbuddy.in/
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T05:18:55.512Z | cybersecurity-resources | "hacker" | Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/134.0.0.0 Safari/537.36
+2025-04-02T05:19:17.466Z ::ffff:192.168.1.4 [base64] Status: Success Action: encode, Content: 
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T05:20:17.907Z ::ffff:192.168.1.4 [grab_redirect_url] Status: Success Action: grab_url, URL: http://192.168.1.201:3000/grabRedirectUrl
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T05:20:27.454Z ::ffff:192.168.1.4 [grab_redirect_url] Status: Success Action: grab_url, URL: http://192.168.1.201:3000/grabRedirectUrl
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T05:20:38.792Z ::ffff:192.168.1.4 [base64] Status: Success Action: encode, Content: tegdvafeaewcasd
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T05:20:40.673Z ::ffff:192.168.1.4 [base64] Status: Success Action: decode, Content: tegdvafeaewcasd
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T05:20:41.282Z ::ffff:192.168.1.4 [base64] Status: Success Action: decode, Content: tegdvafeaewcasd
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T05:20:41.782Z ::ffff:192.168.1.4 [base64] Status: Success Action: encode, Content: tegdvafeaewcasd
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T05:20:42.349Z ::ffff:192.168.1.4 [base64] Status: Success Action: decode, Content: tegdvafeaewcasd
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T05:20:43.245Z ::ffff:192.168.1.4 [base64] Status: Success Action: encode, Content: tegdvafeaewcasd
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T05:20:48.831Z ::ffff:192.168.1.4 [base64] Status: Success Action: encode, Content: http://192.168.1.201:3000/grabRedirectUrl
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T05:20:57.745Z ::ffff:192.168.1.4 [base64] Status: Success Action: encode, Content: socbuddy.in
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T05:21:00.043Z ::ffff:192.168.1.4 [base64] Status: Failure Action: decode, Content: socbuddy.in
+Error: [Action: decode, Content: socbuddy.in] > Error decoding text. Please check if the input is valid Base64.
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T05:21:01.933Z ::ffff:192.168.1.4 [base64] Status: Failure Action: decode, Content: socbuddy.in
+Error: [Action: decode, Content: socbuddy.in] > Error decoding text. Please check if the input is valid Base64.
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T05:21:06.215Z ::ffff:192.168.1.4 [base64] Status: Success Action: decode, Content: 
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T06:09:52.277Z ::ffff:192.168.1.4 [base64] Status: Success Action: decode, Content: 
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T06:09:53.101Z ::ffff:192.168.1.4 [base64] Status: Success Action: encode, Content: 
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T06:09:54.735Z ::ffff:192.168.1.4 [base64] Status: Success Action: encode, Content: 
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T06:09:55.180Z ::ffff:192.168.1.4 [base64] Status: Success Action: decode, Content: 
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T06:09:57.055Z ::ffff:192.168.1.4 [base64] Status: Success Action: encode, Content: 
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T06:09:59.157Z ::ffff:192.168.1.4 [base64] Status: Success Action: encode, Content: a
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T06:10:03.174Z ::ffff:192.168.1.4 [base64] Status: Success Action: encode, Content: b
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T06:10:07.558Z ::ffff:192.168.1.4 [base64] Status: Success Action: encode, Content: ab
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T06:10:11.023Z ::ffff:192.168.1.4 [base64] Status: Success Action: encode, Content: c
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T06:10:14.282Z ::ffff:192.168.1.4 [base64] Status: Success Action: encode, Content: d
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T06:10:16.953Z ::ffff:192.168.1.4 [base64] Status: Success Action: encode, Content: e
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T06:10:20.444Z ::ffff:192.168.1.4 [base64] Status: Success Action: encode, Content: z
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T06:10:23.091Z ::ffff:192.168.1.4 [base64] Status: Success Action: encode, Content: Z
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T06:10:25.768Z ::ffff:192.168.1.4 [base64] Status: Failure Action: decode, Content: Z
+Error: [Action: decode, Content: Z] > Error decoding text. Please check if the input is valid Base64.
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T06:10:26.598Z ::ffff:192.168.1.4 [base64] Status: Success Action: encode, Content: Z
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-02T11:27:01.520Z ::ffff:192.168.1.4 [base64] Status: Success Action: encode, Content: 
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-03T07:20:53.679Z ::ffff:192.168.1.4 [base64] Status: Success Action: encode, Content: 
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-03T09:07:17.812Z ::ffff:192.168.1.4 [indicator_extractor] Status: Success Action: extract_from_file, Content: File processed with content length: 329782
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-03T11:17:01.847Z ::ffff:192.168.1.201 [grab_redirect_url] Status: Failure Action: grab_url, URL: 
+Error: [Action: grab_url, URL: ] > URL is required
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-03T11:20:55.354Z ::ffff:192.168.1.201 [base64] Status: Success Action: encode, Content: testString
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-03T11:20:58.738Z ::ffff:192.168.1.201 [base64] Status: Success Action: decode, Content: testString
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-03T11:21:00.172Z ::ffff:192.168.1.201 [base64] Status: Success Action: decode, Content: testString
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-03T11:21:00.601Z ::ffff:192.168.1.201 [base64] Status: Success Action: encode, Content: testString
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-04T13:01:26.651Z ::ffff:192.168.1.4 [grab_redirect_url] Status: Failure Action: grab_url, URL: how are you
+Error: [Action: grab_url, URL: how are you] > Invalid URL format
+++++++++++++++++++++++++++++++++++++++++++++
+
+2025-04-05T14:20:46.054Z ::ffff:192.168.1.4 [base64] Status: Success Action: encode, Content: 
+++++++++++++++++++++++++++++++++++++++++++++
+
