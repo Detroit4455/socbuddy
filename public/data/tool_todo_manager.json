@@ -105,6 +105,18 @@
     "detail": "1. Add function to auto generate the 1 task Daily With Default activities\n",
     "comments": [
       {
+        "text": "advance section where user can setup future task < future start Date > Along with recuring action start time  means every year month. etc",
+        "date": "Apr 8, 2025, 02:31 PM",
+        "timestamp": 1744102912217,
+        "awaiting": false
+      },
+      {
+        "text": "Daily task section once click on the button go to the dialy task > \nuser can create task which will be shown along with checkpoint \n",
+        "date": "Apr 8, 2025, 02:29 PM",
+        "timestamp": 1744102775377,
+        "awaiting": false
+      },
+      {
         "text": "d",
         "date": "Apr 7, 2025, 05:08 PM",
         "timestamp": 1744025886682,
@@ -133,7 +145,7 @@
     ],
     "expanded": false,
     "startDate": "2025-04-02",
-    "status": "Awaiting"
+    "status": "In Progress"
   },
   {
     "name": "AWS EC2 Setup ",
@@ -216,10 +228,17 @@
     "dueDate": "2025-04-11",
     "owner": "Danny",
     "detail": "Abolute Integration is not working > tested with postman able to authicate ",
-    "comments": [],
+    "comments": [
+      {
+        "text": "Wating for reposne ",
+        "date": "Apr 9, 2025, 11:08 AM",
+        "timestamp": 1744177092306,
+        "awaiting": true
+      }
+    ],
     "expanded": false,
     "startDate": "2025-04-03",
-    "status": "Pending"
+    "status": "Awaiting"
   },
   {
     "name": "Correlation rules are in an execution error state",
@@ -269,6 +288,12 @@
     "detail": "\n\nIL-P2-NIPS-096-NA-SIEM-Hacking-SuspiciousActivity-Multiple_Signature_Triggerred_From_Same_IP\n\nconfig case_sensitive = false\n| datamodel dataset = cisco_firepower_raw  \n| bin _time span = 5m\n| filter xdm.event.id = \"430001\" and xdm.source.is_internal_ip = false and incidr (xdm.source.ipv4,\"103.75.173.0/24\")=false and incidr (xdm.source.ipv4,\"205.210.31.0/24\")=false and incidr (xdm.source.ipv4,\"198.235.24.0/24\")=false\n|filter incidr (xdm.source.ipv4,\"40.92.0.0/15\")=false and incidr(xdm.source.ipv4,\"40.107.0.0/16\")= false and incidr (xdm.source.ipv4,\"52.100.0.0/14\")=false and incidr (xdm.source.ipv4,\"52.238.78.88/32\")=false and incidr (xdm.source.ipv4,\"104.47.0.0/17\")=false and incidr (xdm.source.ipv4,\"2a01:0111:f400:0000:0000:0000:0000:0000/48\")=false and incidr (xdm.source.ipv4,\"2a01:0111:f403:0000:0000:0000:0000:0000/48\")=false\n| alter device_ip = cisco_firepower_raw._final_reporting_device_ip, policy_name = xdm.event.operation\n|join type = left  (dataset = dmz_ip_address_list ) as dmz xdm.source.ipv4 = dmz.ip_address or incidr(xdm.source.ipv4, dmz.ip_address) = true | filter ip_address =null\n| join type = left (dataset = iisvascan_ip_address_list | fields ip_address as ip) as iis_scan iis_scan.ip = xdm.source.ipv4 | filter ip = null\n| join type = left  (dataset = dmz_ip_address_list ) as dmz xdm.target.ipv4 = dmz.ip_address or incidr(xdm.target.ipv4, dmz.ip_address) = true | filter (xdm.target.is_internal_ip =true or ip_address !=null)\n| fields xdm.event.id, xdm.event.type, xdm.event.log_level, xdm.observer.action, xdm.source.host.hostname, xdm.source.ipv4, xdm.source.port, xdm.event.description, xdm.alert.description, xdm.target.ipv4, xdm.target.port, xdm.network.ip_protocol , xdm.event.operation, xdm.source.application.name , xdm.source.location.country, xdm.source.asn.as_name, xdm.target.asn.as_name, _time, _insert_time, device_ip, policy_name, _vendor, _product\n| comp earliest(_time )as FirstEventTime,count() as matched_events, values(*) as * by xdm.source.ipv4\n| filter array_length(xdm.alert.description) >= 5 \n| filter matched_events >= 5\n\n| join type = left (datamodel dataset = check_point_vpn_1_firewall_1_raw  | alter origin = check_point_vpn_1_firewall_1_raw.origin\n | join type = left (dataset = dmz_ip_address_list ) as dmz xdm.target.ipv4 = dmz.ip_address or incidr(xdm.target.ipv4, dmz.ip_address) = true | filter (xdm.target.is_internal_ip =true or ip_address !=null)\n| fields xdm.observer.action as action, xdm.source.ipv4 as fw_src_ip, xdm.source.port, xdm.target.ipv4, xdm.target.is_internal_ip) as fw_events fw_events.fw_src_ip = xdm.source.ipv4\n| filter fw_src_ip != null and action =\"accept\"\n| dedup xdm.source.ipv4 \n| alter aggregation_criteria = \"ilsourceip\", event_time = format_timestamp(\"%Y-%m-%d %H:%M:%S\", firsteventtime )",
     "comments": [
       {
+        "text": "Modified\n",
+        "date": "Apr 9, 2025, 11:10 AM",
+        "timestamp": 1744177205270,
+        "awaiting": true
+      },
+      {
         "text": "I modified the rule and made the copy of that ",
         "date": "Apr 6, 2025, 11:43 PM",
         "timestamp": 1743963220956
@@ -276,7 +301,7 @@
     ],
     "expanded": false,
     "startDate": "2025-04-03",
-    "status": "In Progress"
+    "status": "Awaiting"
   },
   {
     "name": "Correlation Rules",
@@ -293,10 +318,17 @@
     "dueDate": "2025-04-04",
     "owner": "danny ",
     "detail": "\n> need to fwd date to other tenant",
-    "comments": [],
+    "comments": [
+      {
+        "text": "Waiting for reponse form  > prashant",
+        "date": "Apr 9, 2025, 11:09 AM",
+        "timestamp": 1744177172055,
+        "awaiting": true
+      }
+    ],
     "expanded": false,
     "startDate": "2025-04-04",
-    "status": "Pending"
+    "status": "Awaiting"
   },
   {
     "name": "TEMP",
@@ -345,7 +377,7 @@
     "comments": [],
     "expanded": false,
     "startDate": "2025-04-07",
-    "status": "Pending",
+    "status": "Completed",
     "taskId": "TASK-1744025326851"
   },
   {
@@ -353,19 +385,131 @@
     "dueDate": "2025-04-07",
     "owner": "dass",
     "detail": "sdfasd",
-    "comments": [],
+    "comments": [
+      {
+        "text": "optimization given wating for infosys",
+        "date": "Apr 9, 2025, 11:10 AM",
+        "timestamp": 1744177239691,
+        "awaiting": true
+      }
+    ],
     "expanded": false,
     "startDate": "2025-04-07",
-    "status": "Pending"
+    "status": "Awaiting"
   },
   {
     "name": "New Feature Request Large Upload (HTTPS).",
     "dueDate": "2025-04-09",
     "owner": "Danny",
     "detail": "We have requirement for below mentioned rules where we want a new custom field to be added as filter. In this custom field we want the numeric value of uploaded/downloaded data to get fetched in the alerts table.\n\n \n\nRule Name:\n\nLarge Upload (HTTPS).\nLarge Upload (Generic).",
-    "comments": [],
+    "comments": [
+      {
+        "text": "Duplicate",
+        "date": "Apr 8, 2025, 03:10 PM",
+        "timestamp": 1744105228619,
+        "awaiting": false
+      }
+    ],
     "expanded": false,
     "startDate": "2025-04-07",
+    "status": "Completed"
+  },
+  {
+    "name": "INT | SETUP BVM IN AWS ",
+    "dueDate": "2025-04-13",
+    "owner": "Danny",
+    "detail": "Setup the bvm in aws ",
+    "comments": [],
+    "expanded": false,
+    "startDate": "2025-04-08",
+    "status": "Pending"
+  },
+  {
+    "name": "XDR Collector upgrade issue ",
+    "dueDate": "2025-04-08",
+    "owner": "Danny",
+    "detail": "Unable to upgrade xdrc collector to 1.4.2 for amazon linux \n? do we support 1.4.2 for amzon linux \n",
+    "comments": [
+      {
+        "text": "Replied to Sourabh",
+        "date": "Apr 9, 2025, 11:07 AM",
+        "timestamp": 1744177070556,
+        "awaiting": true
+      }
+    ],
+    "expanded": false,
+    "startDate": "2025-04-08",
+    "status": "Awaiting"
+  },
+  {
+    "name": "New Feature Request | Harish Kumar Senthil",
+    "dueDate": "2025-04-08",
+    "owner": "Danny ",
+    "detail": "\nInbox\n\nHarish Kumar Senthil <harishkumar.senthil@infosys.com>\n \n\nWe have requirement for below mentioned rules where we want a new custom field to be added as filter. In this custom field we want the numeric value of uploaded/downloaded data to get fetched in the alerts table.\n\n \n\nRule Name:\n\nLarge Upload (HTTPS).\nLarge Upload (Generic).\n \n\nFor more information, please schedule a call.\n\n \n\nRegards,\n\nHarish Kumar Senthil.",
+    "comments": [
+      {
+        "text": "Meeting scheduled",
+        "date": "Apr 10, 2025, 11:14 AM",
+        "timestamp": 1744263840188,
+        "awaiting": false
+      }
+    ],
+    "expanded": false,
+    "startDate": "2025-04-08",
+    "status": "In Progress"
+  },
+  {
+    "name": "Service Now Enhanceemnt",
+    "dueDate": "2025-04-08",
+    "owner": "Danny",
+    "detail": "Service Now connector Development request for Outbound HTTP Logs table",
+    "comments": [
+      {
+        "text": "Request submitted\n",
+        "date": "Apr 9, 2025, 11:07 AM",
+        "timestamp": 1744177052609,
+        "awaiting": true
+      }
+    ],
+    "expanded": false,
+    "startDate": "2025-04-08",
+    "status": "Awaiting"
+  },
+  {
+    "name": "RE: FW: A new comment has been added on a case [Case#: 03467458] - H",
+    "dueDate": "2025-04-08",
+    "owner": "Danny",
+    "detail": "Need to check this ",
+    "comments": [],
+    "expanded": false,
+    "startDate": "2025-04-08",
+    "status": "Pending"
+  },
+  {
+    "name": "Log reduction since 19Feb",
+    "dueDate": "2025-04-09",
+    "owner": "Danny",
+    "detail": "Convey to infosys xsiam ingestion is healthy , no error detected so far, ",
+    "comments": [
+      {
+        "text": "updated to infosys waiting for the respose",
+        "date": "Apr 9, 2025, 11:25 AM",
+        "timestamp": 1744178150998,
+        "awaiting": true
+      }
+    ],
+    "expanded": false,
+    "startDate": "2025-04-09",
+    "status": "Awaiting"
+  },
+  {
+    "name": "As Built Document",
+    "dueDate": "2025-04-09",
+    "owner": "Danny",
+    "detail": "INFOSYS AS BUILT DOCS",
+    "comments": [],
+    "expanded": false,
+    "startDate": "2025-04-09",
     "status": "Pending"
   }
 ]

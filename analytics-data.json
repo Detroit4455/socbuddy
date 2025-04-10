@@ -1,12 +1,12 @@
 {
-  "/": 746,
-  "/base64": 85,
-  "/grabRedirectUrl": 48,
-  "/indicator-extractor": 68,
-  "/cybersecurity-resources": 110,
+  "/": 825,
+  "/base64": 86,
+  "/grabRedirectUrl": 54,
+  "/indicator-extractor": 74,
+  "/cybersecurity-resources": 113,
   "/about": 2,
   "/contact": 2,
-  "/todo-list-manager": 255,
-  "/log-analyzer": 304,
-  "/todo-list-manager/statistics": 19
+  "/todo-list-manager": 289,
+  "/log-analyzer": 324,
+  "/todo-list-manager/statistics": 25
 }
