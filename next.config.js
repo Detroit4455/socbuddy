@@ -2,7 +2,7 @@
 const nextConfig = {
   // Experimental features (if needed)
   experimental: {
-    // Remove serverActions as it's now available by default
+    // No experimental features needed
   }
 }
 

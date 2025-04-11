@@ -2,6 +2,10 @@ import fs from 'fs';
 import path from 'path';
 import { NextResponse } from 'next/server';
 
+// Add route segment configuration for dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 // Admin password (in a real app, this would be stored securely)
 const ADMIN_PASSWORD = 'admin123';
 

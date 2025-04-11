@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server';
 import fs from 'fs';
 import path from 'path';
 
+// Add route segment configuration for dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 // Path to the log file
 const LOG_FILE = path.join(process.cwd(), 'user_input.log');
 

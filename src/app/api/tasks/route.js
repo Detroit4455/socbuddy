@@ -3,6 +3,10 @@ const Task = require('@/models/Task');
 const { connectDB } = require('@/lib/mongodb');
 const { getToken } = require('next-auth/jwt');
 
+// Add route segment configuration for dynamic rendering
+export const dynamic = 'force-dynamic'; 
+export const runtime = 'nodejs';
+
 export async function GET(request) {
   try {
     await connectDB();

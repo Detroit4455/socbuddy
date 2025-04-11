@@ -2,6 +2,10 @@ const { NextResponse } = require('next/server');
 const { connectDB, getDbInfo } = require('@/lib/mongodb');
 const { getToken } = require('next-auth/jwt');
 
+// Configure route to use dynamic rendering
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function GET(request) {
   try {
     console.log("DB-INFO API: Request received");

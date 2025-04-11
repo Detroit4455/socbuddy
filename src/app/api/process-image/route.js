@@ -1,12 +1,9 @@
 import { NextResponse } from 'next/server';
 
-export const config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '10mb', // Limit file size to 10MB
-    },
-  },
-};
+// Updated to use new Route segment config
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+export const maxDuration = 10; // Maximum duration in seconds
 
 export async function POST(request) {
   try {
@@ -53,3 +50,5 @@ export async function POST(request) {
     );
   }
 } 
+
+
