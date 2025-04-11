@@ -1,6 +1,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import PageTracker from "./components/PageTracker";
+import SessionProvider from "@/providers/SessionProvider";
 
 const inter = Inter({
   subsets: ["latin"],
@@ -34,7 +35,9 @@ export default function RootLayout({ children }) {
       </head>
       <body className={`${inter.variable} antialiased`}>
         <PageTracker />
-        {children}
+        <SessionProvider>
+          {children}
+        </SessionProvider>
       </body>
     </html>
   );

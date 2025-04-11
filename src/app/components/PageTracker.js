@@ -7,7 +7,7 @@ export default function PageTracker() {
 
   useEffect(() => {
     // Don't track admin page visits
-    if (pathname.startsWith('/admin')) {
+    if (pathname.startsWith('/administrator')) {
       return;
     }
     

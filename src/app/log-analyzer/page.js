@@ -1367,7 +1367,7 @@ const LogAnalyzer = () => {
           <li><Link href="/" className="hover:text-[rgba(9,203,177,0.823)] transition-colors">Home</Link></li>
           <li><a href="#" className="hover:text-[rgba(9,203,177,0.823)] transition-colors">About</a></li>
           <li><a href="#" className="hover:text-[rgba(9,203,177,0.823)] transition-colors">Contact</a></li>
-          <li><Link href="/admin" className="hover:text-[rgba(9,203,177,0.823)] transition-colors">Admin</Link></li>
+          <li><Link href="/administrator" className="hover:text-[rgba(9,203,177,0.823)] transition-colors">Administrator</Link></li>
         </ul>
       </nav>
 

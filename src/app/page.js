@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import Link from 'next/link';
+import Navbar from '@/components/Navbar';
 
 const Home = () => {
   const [tools, setTools] = useState([]);
@@ -25,26 +26,11 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-[#121212]">
-      {/* Top Navigation */}
-      <nav className="w-full bg-[#1e1e1e] p-2 text-white flex justify-between fixed top-0 left-0 right-0 z-40 border-b border-[#333]">
-        <div className="flex items-center space-x-2">
-          <img 
-            src="/ICON.svg" 
-            alt="SocBuddy Logo" 
-            className="w-6 h-6"
-          />
-          <span className="text-lg font-bold text-[rgba(9,203,177,0.823)]">SocBuddy</span>
-        </div>
-        <ul className="flex space-x-4">
-          <li><a href="#" className="hover:text-[rgba(9,203,177,0.823)] transition-colors">Home</a></li>
-          <li><a href="#" className="hover:text-[rgba(9,203,177,0.823)] transition-colors">About</a></li>
-          <li><a href="#" className="hover:text-[rgba(9,203,177,0.823)] transition-colors">Contact</a></li>
-          <li><Link href="/admin" className="hover:text-[rgba(9,203,177,0.823)] transition-colors">Admin</Link></li>
-        </ul>
-      </nav>
+      {/* Use the shared Navbar component */}
+      <Navbar />
 
       {/* Main Content */}
-      <div className="pt-12 min-h-screen flex flex-col items-center text-[#e0e0e0] font-['Segoe_UI',Tahoma,Geneva,Verdana,sans-serif] px-4">
+      <div className="pt-20 min-h-screen flex flex-col items-center text-[#e0e0e0] font-['Segoe_UI',Tahoma,Geneva,Verdana,sans-serif] px-4">
         <div className="max-w-4xl w-full space-y-12">
           <div className="text-center space-y-6">
             <h1 className="text-3xl font-bold text-[rgba(9, 203, 177, 0.4)]">⚡ Unlock the Power of Cybersecurity & IT – All in One Place!</h1>

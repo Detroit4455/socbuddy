@@ -2,8 +2,11 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSession } from 'next-auth/react';
+import Navbar from '@/components/Navbar';
 
 const TodoListManager = () => {
+  const { data: session } = useSession();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newTask, setNewTask] = useState({ 
@@ -30,6 +33,16 @@ const TodoListManager = () => {
   const [popup, setPopup] = useState({ show: false, message: '', type: 'info' });
   const tasksPerPage = 100;
 
+  // Update owner field with authenticated username when session is loaded
+  useEffect(() => {
+    if (session?.user?.username && !newTask.owner) {
+      setNewTask(prev => ({
+        ...prev,
+        owner: session.user.username
+      }));
+    }
+  }, [session, newTask.owner]);
+
   // Function to show popup
   const showPopup = (message, type = 'info') => {
     setPopup({ show: true, message, type });
@@ -50,14 +63,15 @@ const TodoListManager = () => {
     </div>
   );
 
-  // Load tasks from JSON file
+  // Load tasks from MongoDB API
   useEffect(() => {
     const loadTasks = async () => {
       try {
-        // Always try to load from JSON file first
-        const response = await fetch('/data/tool_todo_manager.json');
+        setLoading(true);
+        // Fetch tasks from our MongoDB API endpoint
+        const response = await fetch('/api/tasks');
         if (!response.ok) {
-          throw new Error('Failed to load tasks');
+          throw new Error('Failed to load tasks from API');
         }
         const data = await response.json();
         
@@ -65,20 +79,15 @@ const TodoListManager = () => {
         const tasksWithDefaults = data.map(task => ({
           ...task,
           comments: task.comments || [],
-          startDate: task.startDate || new Date().toISOString().split('T')[0],
           expanded: false
         }));
         
         setTasks(tasksWithDefaults);
         setFilteredTasks(tasksWithDefaults);
-        
-        // Also update localStorage
-        localStorage.setItem('todoTasks', JSON.stringify(tasksWithDefaults));
-        
         setLoading(false);
       } catch (error) {
         console.error('Error loading tasks:', error);
-        // If loading from JSON fails, try localStorage as fallback
+        // If loading from API fails, try localStorage as fallback
         const savedTasks = localStorage.getItem('todoTasks');
         if (savedTasks) {
           const parsedTasks = JSON.parse(savedTasks);
@@ -86,6 +95,7 @@ const TodoListManager = () => {
           setFilteredTasks(parsedTasks);
         }
         setLoading(false);
+        showPopup('Error loading tasks. Using cached data.', 'error');
       }
     };
 
@@ -169,18 +179,26 @@ const TodoListManager = () => {
   };
 
   const addTask = () => {
-    if (newTask.name && newTask.dueDate && newTask.owner && newTask.detail) {
+    // Check if user is logged in
+    if (!session) {
+      window.location.href = '/auth/signin?callbackUrl=/todo-list-manager';
+      return;
+    }
+    
+    if (newTask.name && newTask.dueDate && newTask.detail) {
       const updatedTasks = [...tasks, { 
         ...newTask, 
         comments: [],
         startDate: new Date().toISOString().split('T')[0],
-        status: 'Pending' // Ensure status is Pending when adding task
+        status: 'Pending', // Ensure status is Pending when adding task
+        userId: session.user.id, // Add the user ID to the task
+        owner: session.user.username // Set owner to the current user's username
       }];
       setTasks(updatedTasks);
       setNewTask({ 
         name: '', 
         dueDate: new Date().toISOString().split('T')[0],
-        owner: '', 
+        owner: session?.user?.username || '', 
         detail: '', 
         comments: [], 
         expanded: false,
@@ -190,7 +208,7 @@ const TodoListManager = () => {
       
       saveTasksToStorage(updatedTasks, true);
     } else {
-      showPopup('Please fill all required fields: Task Name, Due Date, Owner, and Detail.', 'error');
+      showPopup('Please fill all required fields: Task Name, Due Date, and Detail.', 'error');
     }
   };
 
@@ -307,23 +325,67 @@ const TodoListManager = () => {
 
   const saveTasksToStorage = async (updatedTasks, showAlert = true) => {
     try {
-      // Save to localStorage for immediate access
+      // Save to localStorage for immediate access and backup
       localStorage.setItem('todoTasks', JSON.stringify(updatedTasks));
       
-      // Save to JSON file
-      const response = await fetch('/api/saveTasks', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(updatedTasks)
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to save tasks');
+      // Find what tasks were added, modified, or deleted
+      const existingIds = tasks.map(task => task._id).filter(id => id);
+      const updatedIds = updatedTasks.map(task => task._id).filter(id => id);
+      
+      // Handle new tasks (those without an _id)
+      const newTasks = updatedTasks.filter(task => !task._id);
+      for (const newTask of newTasks) {
+        const response = await fetch('/api/tasks', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(newTask)
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to create task');
+        }
       }
-
-      console.log('Tasks saved successfully:', updatedTasks);
+      
+      // Handle modified tasks (those with an _id that still exist)
+      const modifiedTasks = updatedTasks.filter(task => task._id);
+      for (const modifiedTask of modifiedTasks) {
+        const response = await fetch('/api/tasks', {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(modifiedTask)
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to update task');
+        }
+      }
+      
+      // Handle deleted tasks (those in existingIds but not in updatedIds)
+      const deletedIds = existingIds.filter(id => !updatedIds.includes(id));
+      for (const _id of deletedIds) {
+        const response = await fetch('/api/tasks', {
+          method: 'DELETE',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ _id })
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to delete task');
+        }
+      }
+      
+      // After all operations, refresh tasks from API
+      const response = await fetch('/api/tasks');
+      if (response.ok) {
+        const refreshedTasks = await response.json();
+        setTasks(refreshedTasks);
+      }
       
       if (saveTimeout === null && showAlert) {
         showPopup('Tasks saved successfully!', 'success');
@@ -363,21 +425,27 @@ const TodoListManager = () => {
 
   return (
     <div className="min-h-screen bg-[#121212] py-10 px-4 sm:px-6 lg:px-8">
+      <Navbar />
+      
       {/* Add Popup to the top level */}
       {popup.show && <Popup message={popup.message} type={popup.type} />}
       
-      <div className="max-w-4xl mx-auto bg-[#1e1e1e] rounded-2xl shadow-lg p-6 border border-[#444]">
+      <div className="max-w-4xl mx-auto bg-[#1e1e1e] rounded-2xl shadow-lg p-6 border border-[#444] mt-16">
         <div className="flex justify-between items-center mb-6">
-          <div className="w-1/4"></div>
+          <div className="w-1/4">
+            {session && (
+              <p className="text-sm text-[rgba(9,203,177,0.823)]">
+                Welcome, {session.user.username}!
+              </p>
+            )}
+          </div>
           <h1 className="text-2xl font-semibold text-white text-center w-2/4">Todo List Manager</h1>
           <div className="w-1/4 flex justify-end">
-            <Link href="/" className="bg-[#1e1e1e] hover:bg-[#2a2a2a] text-[rgba(9,203,177,0.823)] py-2 px-4 rounded border border-[rgba(9,203,177,0.823)] hover:shadow-[0_0_20px_rgba(45,169,164,0.3)] transition-all duration-300">
-              Home
-            </Link>
+            {/* Dashboard link removed */}
           </div>
         </div>
-
-        <div className="mb-4 grid grid-cols-3 gap-2">
+        
+        <div className="mb-4 grid grid-cols-2 gap-2">
           <input
             type="text"
             name="name"
@@ -393,37 +461,32 @@ const TodoListManager = () => {
             onChange={handleInputChange}
             className="border border-[#444] bg-[#2a2a2a] text-[#e0e0e0] py-1.5 px-4 rounded focus:outline-none focus:ring-2 focus:ring-[rgba(9,203,177,0.823)]"
           />
-          <input
-            type="text"
-            name="owner"
-            value={newTask.owner}
-            onChange={handleInputChange}
-            placeholder="Owner"
-            className="border border-[#444] bg-[#2a2a2a] text-[#e0e0e0] py-1.5 px-4 rounded focus:outline-none focus:ring-2 focus:ring-[rgba(9,203,177,0.823)]"
-          />
-          <textarea
-            name="detail"
-            value={newTask.detail}
-            onChange={handleInputChange}
-            placeholder="Detail"
-            className="border border-[#444] bg-[#2a2a2a] text-[#e0e0e0] py-1.5 px-4 rounded resize-none col-span-2 focus:outline-none focus:ring-2 focus:ring-[rgba(9,203,177,0.823)]"
-            rows="2"
-          />
-          <div className="flex space-x-2 h-full">
-            <button
-              onClick={addTask}
-              className="flex-1 py-2 px-4 rounded-lg transition-all duration-300 bg-[#1e1e1e] border border-[#444] text-[#e0e0e0] hover:bg-[rgba(9,203,177,0.1)] hover:text-[rgba(9,203,177,0.823)] flex items-center justify-center"
-            >
-              Add Task
-            </button>
-            <Link 
-              href="/todo-list-manager/statistics"
-              className="flex-1 py-2 px-4 rounded-lg transition-all duration-300 bg-[#1e1e1e] border border-[#444] text-[#e0e0e0] hover:bg-[rgba(9,203,177,0.1)] hover:text-[rgba(9,203,177,0.823)] flex items-center justify-center"
-            >
-              Statistics
-            </Link>
+          <div className="col-span-2 grid grid-cols-3 gap-2">
+            <textarea
+              name="detail"
+              value={newTask.detail}
+              onChange={handleInputChange}
+              placeholder="Detail"
+              className="col-span-2 border border-[#444] bg-[#2a2a2a] text-[#e0e0e0] py-1.5 px-4 rounded focus:outline-none focus:ring-2 focus:ring-[rgba(9,203,177,0.823)] resize-y"
+              rows="2"
+            />
+            <div className="flex flex-col space-y-2">
+              <button 
+                onClick={addTask} 
+                className="flex-1 py-2 px-4 rounded-lg transition-all duration-300 bg-[#1e1e1e] border border-[#444] text-[#e0e0e0] hover:bg-[rgba(9,203,177,0.1)] hover:text-[rgba(9,203,177,0.823)] flex items-center justify-center"
+              >
+                Add Task
+              </button>
+              <Link 
+                href="/todo-list-manager/statistics"
+                className="flex-1 py-2 px-4 rounded-lg transition-all duration-300 bg-[#1e1e1e] border border-[#444] text-[#e0e0e0] hover:bg-[rgba(9,203,177,0.1)] hover:text-[rgba(9,203,177,0.823)] flex items-center justify-center"
+              >
+                Statistics
+              </Link>
+            </div>
           </div>
         </div>
+        
         <div className="flex items-center justify-between mb-4">
           {/* Date Filter Dropdown */}
           <div className="flex items-center mr-4">
@@ -588,17 +651,7 @@ const TodoListManager = () => {
                           )}
                         </td>
                         <td className="py-2 px-4 text-[#e0e0e0]">
-                          {editingTask === originalIndex ? (
-                            <input
-                              type="text"
-                              value={task.owner}
-                              onChange={(e) => handleCellEdit(originalIndex, 'owner', e.target.value)}
-                              className="w-full bg-[#2a2a2a] text-[#e0e0e0] p-1 rounded border border-[#444]"
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          ) : (
-                            task.owner
-                          )}
+                          {task.owner}
                         </td>
                         <td className="py-2 px-4 text-[#e0e0e0]">
                           <div className="flex space-x-2">

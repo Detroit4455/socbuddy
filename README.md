@@ -64,7 +64,7 @@ This is a comprehensive web tools application built with Next.js that provides m
   - Line numbers and log statistics
   - Smart log processing with sanitization and formatting
 
-### Admin Dashboard (Protected)
+### Administrator Dashboard (Protected)
 - Password-protected admin interface (password: 1234)
 - Analytics tracking:
   - Page view counts for each tool
@@ -155,7 +155,7 @@ No environment variables are required for basic functionality. The application w
     - `/fix-log-entries.js`: Log processing and highlighting utilities
     - `/sample-logs.js`: Sample logs for testing
     - `/__tests__`: Unit and component tests
-  - `/admin`: Admin dashboard
+  - `/administrator`: Administrator dashboard
   - `/api`: API endpoints
     - `/grab-url`: Handles URL redirect tracking
     - `/fetch-url`: Fetches content from external URLs

@@ -1,26 +1,76 @@
 import { NextResponse } from 'next/server';
+import { getToken } from 'next-auth/jwt';
 
-export function middleware(request) {
-  // Get the user's IP address from various headers
-  const forwarded = request.headers.get('x-forwarded-for');
-  const realIp = request.headers.get('x-real-ip');
-  
-  // Determine the IP - use x-forwarded-for or x-real-ip or default to unknown
-  const ip = (forwarded ? forwarded.split(',')[0] : realIp) || 'unknown';
-  
-  // Clone the request headers and add the IP
-  const requestHeaders = new Headers(request.headers);
-  requestHeaders.set('x-user-ip', ip);
-  
-  // Return response with modified headers
-  return NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
+export async function middleware(request) {
+  const token = await getToken({
+    req: request,
+    secret: process.env.NEXTAUTH_SECRET,
   });
+
+  const { pathname } = request.nextUrl;
+
+  // Allow authentication routes
+  if (pathname.startsWith('/auth') || pathname.startsWith('/api/auth')) {
+    // If user is already logged in and tries to access auth pages, redirect to dashboard
+    if (token && (pathname.startsWith('/auth/signin') || pathname.startsWith('/auth/signup'))) {
+      return NextResponse.redirect(new URL('/dashboard', request.url));
+    }
+    return NextResponse.next();
+  }
+
+  // Allow access to todo-list-manager page without auth (login will be required for specific actions)
+  if (pathname === '/todo-list-manager' || pathname === '/todo-list-manager/') {
+    return NextResponse.next();
+  }
+
+  // Protect API routes for tasks
+  if (pathname.startsWith('/api/tasks')) {
+    if (!token) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    return NextResponse.next();
+  }
+
+  // Protect dashboard, admin, and other sensitive pages
+  const protectedPaths = ['/dashboard', '/administrator'];
+  const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path));
+
+  if (isProtectedPath) {
+    if (!token) {
+      // Create URL to redirect to after login
+      const redirectUrl = new URL('/auth/signin', request.url);
+      redirectUrl.searchParams.set('callbackUrl', pathname);
+
+      // Add administrator to the callbackUrl if needed
+      if (pathname.startsWith('/administrator')) {
+        redirectUrl.searchParams.set('callbackUrl', pathname);
+      }
+
+      return NextResponse.redirect(redirectUrl);
+    }
+
+    // Check for admin paths
+    if (pathname.startsWith('/administrator') && token.role !== 'admin') {
+      // Redirect to dashboard with an access denied message
+      const redirectUrl = new URL('/dashboard', request.url);
+      redirectUrl.searchParams.set('accessDenied', 'administrator');
+      return NextResponse.redirect(redirectUrl);
+    }
+  }
+
+  return NextResponse.next();
 }
 
-// Only run this middleware on API routes
+// Specify which routes this middleware applies to
 export const config = {
-  matcher: '/api/:path*',
+  matcher: [
+    // Auth pages
+    '/auth/:path*', 
+    // Protected pages
+    '/dashboard/:path*',
+    '/todo-list-manager/:path*',
+    '/administrator/:path*',
+    // Home page also needs checking for session to update UI
+    '/'
+  ],
 }; 
