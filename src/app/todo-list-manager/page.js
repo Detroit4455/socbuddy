@@ -51,8 +51,8 @@ const TodoListManager = () => {
 
   // Add Popup Component
   const Popup = ({ message, type }) => (
-    <div className={`fixed top-4 right-4 px-6 py-3 rounded-lg shadow-lg transition-all duration-300 transform ${
-      popup.show ? 'translate-y-0 opacity-100' : '-translate-y-4 opacity-0'
+    <div className={`fixed right-4 top-1/2 transform -translate-y-1/2 px-6 py-3 rounded-lg shadow-lg transition-all duration-300 ${
+      popup.show ? 'translate-x-0 opacity-100' : 'translate-x-4 opacity-0'
     } ${
       type === 'error' ? 'bg-red-500' : 
       type === 'success' ? 'bg-[rgba(9,203,177,0.15)]' : 'bg-[#2a2a2a]'

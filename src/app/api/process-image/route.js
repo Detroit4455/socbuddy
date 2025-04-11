@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-// Updated to use new Route segment config
+// Route segment config
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 export const maxDuration = 10; // Maximum duration in seconds
