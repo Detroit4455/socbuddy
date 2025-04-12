@@ -5,15 +5,20 @@ if (!process.env.MONGODB_URI) {
 }
 
 const uri = process.env.MONGODB_URI;
-// Log a masked version of the URI for debugging
+const env = process.env.NODE_ENV || 'development';
+
+// Log environment and masked URI for debugging
 const maskedUri = uri.replace(/\/\/([^:]+):([^@]+)@/, '//***:***@');
-console.log('MongoDB URI (masked):', maskedUri);
+console.log(`[MongoDB] Environment: ${env}`);
+console.log(`[MongoDB] URI (masked): ${maskedUri}`);
+
 let isConnected = false;
 let dbInfo = {
   provider: 'Unknown',
   name: '',
   host: '',
-  connectionStatus: 'Disconnected'
+  connectionStatus: 'Disconnected',
+  environment: env
 };
 
 function detectDbProvider(uri) {
@@ -21,6 +26,8 @@ function detectDbProvider(uri) {
     return 'AWS DocumentDB';
   } else if (uri.includes('mongodb.net')) {
     return 'MongoDB Atlas';
+  } else if (uri.includes('localhost') || uri.includes('127.0.0.1')) {
+    return 'Local MongoDB';
   } else {
     return 'MongoDB';
   }
@@ -51,7 +58,7 @@ function parseDbInfo(uri) {
 
 async function connectDB() {
   if (isConnected) {
-    console.log('Using existing database connection');
+    console.log('[MongoDB] Using existing database connection');
     return dbInfo;
   }
 
@@ -71,20 +78,25 @@ async function connectDB() {
     if (dbInfo.provider === 'AWS DocumentDB') {
       connectionOptions.ssl = true;
       connectionOptions.retryWrites = false;
-      // DocumentDB may need a specific TLS option
       if (process.env.DOCDB_TLS_CERT_PATH) {
         connectionOptions.tlsCAFile = process.env.DOCDB_TLS_CERT_PATH;
       }
     }
 
+    // Add specific options for MongoDB Atlas
+    if (dbInfo.provider === 'MongoDB Atlas') {
+      connectionOptions.ssl = true;
+    }
+
+    console.log(`[MongoDB] Attempting to connect to ${dbInfo.provider}...`);
     const db = await mongoose.connect(uri, connectionOptions);
 
     isConnected = db.connections[0].readyState === 1;
     dbInfo.connectionStatus = isConnected ? 'Connected' : 'Disconnected';
     
-    console.log(`Connected to ${dbInfo.provider} successfully`);
+    console.log(`[MongoDB] Connected to ${dbInfo.provider} successfully`);
   } catch (error) {
-    console.error(`${dbInfo.provider} connection error:`, error);
+    console.error(`[MongoDB] ${dbInfo.provider} connection error:`, error);
     dbInfo.connectionStatus = 'Error: ' + error.message;
     throw error;
   }

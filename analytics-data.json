@@ -1,18 +1,19 @@
 {
-  "/": 93,
-  "/base64": 6,
-  "/grabRedirectUrl": 0,
-  "/indicator-extractor": 0,
-  "/todo-list-manager": 82,
-  "/todo-list-manager/statistics": 16,
+  "/": 107,
+  "/base64": 7,
+  "/grabRedirectUrl": 1,
+  "/indicator-extractor": 1,
+  "/todo-list-manager": 86,
+  "/todo-list-manager/statistics": 17,
   "/auth/signin": 24,
   "/dashboard": 35,
   "/auth/signup": 4,
-  "/cybersecurity-resources": 2,
+  "/cybersecurity-resources": 3,
   "/profile": 5,
   "/adj": 2,
   "/admin": 24,
-  "/log-analyzer": 3,
+  "/log-analyzer": 4,
   "/admin123": 2,
-  "/adi": 2
+  "/adi": 2,
+  "/db-test": 6
 }
