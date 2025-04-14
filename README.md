@@ -17,7 +17,7 @@ This is a comprehensive web tools application built with Next.js that provides m
 ### URL Redirect Grabber
 - Track redirects chains for any URL
 - Display detailed information about each redirect
-- Shows status codes, locations, and full redirect path
+- Shows status codes, locations, and full redirect path 
 
 ### Indicator Extractor
 - Extract various indicators from text, including:

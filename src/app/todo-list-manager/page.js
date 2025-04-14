@@ -6,13 +6,14 @@ import { useSession } from 'next-auth/react';
 import Navbar from '@/components/Navbar';
 
 const TodoListManager = () => {
-  const { data: session } = useSession();
+  const { data: session, status } = useSession();
+  const isGuest = status === 'unauthenticated';
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newTask, setNewTask] = useState({ 
     name: '', 
     dueDate: new Date().toISOString().split('T')[0], // Set today's date as default
-    owner: '', 
+    owner: isGuest ? 'guest' : '', 
     detail: '', 
     comments: [], 
     expanded: false,
@@ -40,8 +41,13 @@ const TodoListManager = () => {
         ...prev,
         owner: session.user.username
       }));
+    } else if (isGuest && newTask.owner === '') {
+      setNewTask(prev => ({
+        ...prev,
+        owner: 'guest'
+      }));
     }
-  }, [session, newTask.owner]);
+  }, [session, newTask.owner, isGuest]);
 
   // Function to show popup
   const showPopup = (message, type = 'info') => {
@@ -68,6 +74,16 @@ const TodoListManager = () => {
     const loadTasks = async () => {
       try {
         setLoading(true);
+        
+        // If user is not signed in, initialize guest tasks first
+        if (isGuest) {
+          try {
+            await fetch('/api/tasks/guest-init');
+          } catch (error) {
+            console.error('Error initializing guest tasks:', error);
+          }
+        }
+        
         // Fetch tasks from our MongoDB API endpoint
         const response = await fetch('/api/tasks');
         if (!response.ok) {
@@ -100,7 +116,7 @@ const TodoListManager = () => {
     };
 
     loadTasks();
-  }, []);
+  }, [isGuest]);
 
   // Function to filter tasks by date
   const filterTasksByDate = (tasks, filter) => {
@@ -181,6 +197,7 @@ const TodoListManager = () => {
   const addTask = () => {
     // Check if user is logged in
     if (!session) {
+      // Redirect to sign-in page with a callback to return to todo-list-manager
       window.location.href = '/auth/signin?callbackUrl=/todo-list-manager';
       return;
     }
@@ -438,13 +455,29 @@ const TodoListManager = () => {
                 Welcome, {session.user.username}!
               </p>
             )}
+            {isGuest && (
+              <p className="text-sm text-yellow-500">
+                Viewing as guest
+              </p>
+            )}
           </div>
           <h1 className="text-2xl font-semibold text-white text-center w-2/4">Todo List Manager</h1>
           <div className="w-1/4 flex justify-end">
-            {/* Dashboard link removed */}
+            {isGuest && (
+              <Link href="/auth/signin?callbackUrl=/todo-list-manager" className="text-yellow-500 hover:underline">
+                Sign in
+              </Link>
+            )}
           </div>
         </div>
         
+        {isGuest && (
+          <div className="mb-4 p-3 bg-yellow-600 bg-opacity-20 border border-yellow-600 rounded-lg text-yellow-500">
+            <p>You are viewing tasks as a guest. <Link href="/auth/signin?callbackUrl=/todo-list-manager" className="underline font-bold">Sign in</Link> to create and manage your own tasks.</p>
+          </div>
+        )}
+        
+        {/* Task Creation Form - Show to all users but make inputs normal for guests */}
         <div className="mb-4 grid grid-cols-2 gap-2">
           <input
             type="text"
@@ -466,23 +499,25 @@ const TodoListManager = () => {
               name="detail"
               value={newTask.detail}
               onChange={handleInputChange}
-              placeholder="Detail"
-              className="col-span-2 border border-[#444] bg-[#2a2a2a] text-[#e0e0e0] py-1.5 px-4 rounded focus:outline-none focus:ring-2 focus:ring-[rgba(9,203,177,0.823)] resize-y"
-              rows="2"
+              placeholder="Task Detail"
+              className="col-span-2 border border-[#444] bg-[#2a2a2a] text-[#e0e0e0] py-1.5 px-4 rounded focus:outline-none focus:ring-2 focus:ring-[rgba(9,203,177,0.823)] resize-none"
+              rows="3"
             />
-            <div className="flex flex-col space-y-2">
-              <button 
-                onClick={addTask} 
-                className="flex-1 py-2 px-4 rounded-lg transition-all duration-300 bg-[#1e1e1e] border border-[#444] text-[#e0e0e0] hover:bg-[rgba(9,203,177,0.1)] hover:text-[rgba(9,203,177,0.823)] flex items-center justify-center"
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={addTask}
+                className="flex-1 py-2 px-4 rounded-lg transition-all duration-300 bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)] hover:bg-[rgba(9,203,177,0.2)] hover:shadow-[0_0_20px_rgba(45,169,164,0.3)]"
               >
                 Add Task
               </button>
-              <Link 
-                href="/todo-list-manager/statistics"
-                className="flex-1 py-2 px-4 rounded-lg transition-all duration-300 bg-[#1e1e1e] border border-[#444] text-[#e0e0e0] hover:bg-[rgba(9,203,177,0.1)] hover:text-[rgba(9,203,177,0.823)] flex items-center justify-center"
-              >
-                Statistics
-              </Link>
+              {session && (
+                <Link 
+                  href="/todo-list-manager/statistics"
+                  className="flex-1 py-2 px-4 rounded-lg transition-all duration-300 bg-[#1e1e1e] border border-[#444] text-[#e0e0e0] hover:bg-[rgba(9,203,177,0.1)] hover:text-[rgba(9,203,177,0.823)] flex items-center justify-center"
+                >
+                  Statistics
+                </Link>
+              )}
             </div>
           </div>
         </div>
@@ -655,27 +690,33 @@ const TodoListManager = () => {
                         </td>
                         <td className="py-2 px-4 text-[#e0e0e0]">
                           <div className="flex space-x-2">
-                            <button
-                              onClick={(e) => toggleEditMode(originalIndex, e)}
-                              className="text-[rgba(9,203,177,0.823)] hover:text-[#00ff9d] transition-colors duration-300"
-                              title="Edit Task"
-                            >
-                              {editingTask === originalIndex ? '✓' : '✎'}
-                            </button>
-                            <button
-                              onClick={(e) => toggleCommentMode(originalIndex, e)}
-                              className={`text-[rgba(9,203,177,0.823)] hover:text-[#00ff9d] transition-colors duration-300 ${commentingTask === originalIndex ? 'text-[#00ff9d]' : ''}`}
-                              title="Add Comment"
-                            >
-                              💬
-                            </button>
-                            <button
-                              onClick={(e) => markAsComplete(originalIndex, e)}
-                              className="text-[rgba(9,203,177,0.823)] hover:text-[#00ff9d] transition-colors duration-300"
-                              title="Mark as Complete"
-                            >
-                              ✅
-                            </button>
+                            {!isGuest ? (
+                              <>
+                                <button
+                                  onClick={(e) => toggleEditMode(originalIndex, e)}
+                                  className="text-[rgba(9,203,177,0.823)] hover:text-[#00ff9d] transition-colors duration-300"
+                                  title="Edit Task"
+                                >
+                                  {editingTask === originalIndex ? '✓' : '✎'}
+                                </button>
+                                <button
+                                  onClick={(e) => toggleCommentMode(originalIndex, e)}
+                                  className={`text-[rgba(9,203,177,0.823)] hover:text-[#00ff9d] transition-colors duration-300 ${commentingTask === originalIndex ? 'text-[#00ff9d]' : ''}`}
+                                  title="Add Comment"
+                                >
+                                  💬
+                                </button>
+                                <button
+                                  onClick={(e) => markAsComplete(originalIndex, e)}
+                                  className="text-[rgba(9,203,177,0.823)] hover:text-[#00ff9d] transition-colors duration-300"
+                                  title="Mark as Complete"
+                                >
+                                  ✅
+                                </button>
+                              </>
+                            ) : (
+                              <span className="text-yellow-500 text-xs">Sign in to edit</span>
+                            )}
                           </div>
                         </td>
                       </tr>

@@ -18,6 +18,9 @@ export async function GET(request) {
     });
     
     const userId = token?.id;
+    const isGuest = !userId; // Flag to identify guest users
+    
+    console.log(`[Tasks API] User authentication status: ${isGuest ? 'Guest' : 'Authenticated'}`);
     
     const { searchParams } = new URL(request.url);
     const status = searchParams.get('status');
@@ -26,14 +29,20 @@ export async function GET(request) {
 
     let query = {};
     
-    // Always filter by the current user if authenticated
+    // For non-signed in users, only show tasks with owner="guest"
+    // For logged-in users, only show their tasks
     if (userId) {
       query.userId = userId;
+      console.log(`[Tasks API] Filtering tasks for userId: ${userId}`);
+    } else {
+      query.owner = "guest";
+      console.log(`[Tasks API] Filtering tasks for guest users (owner='guest')`);
     }
 
     // Apply status filter
     if (status && status !== 'all') {
       query.status = status;
+      console.log(`[Tasks API] Applying status filter: ${status}`);
     }
 
     // Apply date filter
@@ -77,6 +86,8 @@ export async function GET(request) {
     }
 
     const tasks = await Task.find(query).sort({ createdAt: -1 });
+    console.log(`[Tasks API] Found ${tasks.length} tasks matching query`);
+    
     return NextResponse.json(tasks);
   } catch (error) {
     console.error('Error fetching tasks:', error);

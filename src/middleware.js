@@ -23,7 +23,14 @@ export async function middleware(request) {
     return NextResponse.next();
   }
 
-  // Protect API routes for tasks
+  // Allow GET requests to specific API endpoints for non-signed in users
+  if ((pathname === '/api/tasks' && request.method === 'GET') ||
+      pathname === '/api/tasks/guest-init') {
+    console.log(`[Middleware] Allowing access to ${pathname} for guest user`);
+    return NextResponse.next();
+  }
+
+  // Protect API routes for tasks (POST, PUT, DELETE)
   if (pathname.startsWith('/api/tasks')) {
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

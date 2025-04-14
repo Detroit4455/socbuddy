@@ -2,5 +2,4 @@
 const nextConfig = {
   // No experimental features needed
 }
-
 module.exports = nextConfig 
