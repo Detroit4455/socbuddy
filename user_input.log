@@ -270,3 +270,5 @@ Error: [Action: grab_url, URL: how are you] > Invalid URL format
 2025-04-12T12:23:38.887Z | cybersecurity-resources | "Hack" | Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36
 2025-04-12T12:23:40.179Z | cybersecurity-resources | "Hackr" | Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36
 2025-04-12T12:23:42.743Z | cybersecurity-resources | "Hack" | Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Mobile Safari/537.36
+2025-04-17T13:56:52.807Z | cybersecurity-resources | "new" | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36
+2025-04-17T13:57:05.809Z | cybersecurity-resources | " geo" | Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/135.0.0.0 Safari/537.36

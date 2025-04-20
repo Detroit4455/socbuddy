@@ -17,9 +17,12 @@ const StatisticsDashboard = () => {
       try {
         setLoading(true);
         
+        // Get the user's current profile
+        const userProfile = session?.user?.userProfile || 'work';
+        
         // First, try to get statistics from our dedicated statistics API
-        // The API will automatically filter by the current user thanks to our middleware
-        const statsResponse = await fetch(`/api/tasks/statistics?dateFilter=${timeRange}`);
+        // Pass the userProfile parameter to filter by profile
+        const statsResponse = await fetch(`/api/tasks/statistics?dateFilter=${timeRange}&profile=${userProfile}`);
         
         if (statsResponse.ok) {
           // If we have a statistics API, use its data
@@ -31,8 +34,8 @@ const StatisticsDashboard = () => {
         }
         
         // Fallback: If statistics API fails, load raw tasks from the tasks API
-        // This will also be filtered by user through our middleware
-        const response = await fetch('/api/tasks');
+        // Include the profile parameter to filter by the current profile
+        const response = await fetch(`/api/tasks?profile=${userProfile}`);
         if (!response.ok) {
           throw new Error('Failed to load tasks');
         }
@@ -49,6 +52,14 @@ const StatisticsDashboard = () => {
           // If we have a user session, filter tasks by this user
           if (session?.user?.id) {
             parsedTasks = parsedTasks.filter(task => task.userId === session.user.id);
+            
+            // Also filter by userProfile if available
+            if (session?.user?.userProfile) {
+              parsedTasks = parsedTasks.filter(task => 
+                task.userProfile === session.user.userProfile || 
+                task.profile_used === `${session.user.userProfile} profile`
+              );
+            }
           }
           setTasks(parsedTasks);
         }
@@ -60,7 +71,7 @@ const StatisticsDashboard = () => {
     if (session) {
       loadTasks();
     }
-  }, [timeRange, session]);
+  }, [timeRange, session, session?.user?.userProfile]);
 
   const filterTasksByDate = (tasks, range) => {
     const today = new Date();
@@ -175,6 +186,9 @@ const StatisticsDashboard = () => {
             {session && (
               <p className="text-sm text-[rgba(9,203,177,0.823)]">
                 Welcome, {session.user.username}!
+                <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-[rgba(9,203,177,0.15)]">
+                  {session.user.userProfile === 'work' ? 'Work' : 'Personal'} profile
+                </span>
               </p>
             )}
           </div>

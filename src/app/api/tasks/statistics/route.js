@@ -21,12 +21,19 @@ export async function GET(request) {
     
     const { searchParams } = new URL(request.url);
     const dateFilter = searchParams.get('dateFilter');
+    const userProfile = searchParams.get('profile') || 'work';
 
     let dateQuery = {};
     
     // Always filter by the current user if authenticated
     if (userId) {
       dateQuery.userId = userId;
+      
+      // Add profile filter - match tasks with userProfile or profile_used 
+      dateQuery.$or = [
+        { userProfile: userProfile },
+        { profile_used: `${userProfile} profile` }
+      ];
     }
     
     if (dateFilter && dateFilter !== 'all') {

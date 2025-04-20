@@ -38,18 +38,31 @@ const authOptions = {
           id: user._id.toString(),
           email: user.email,
           username: user.username,
-          role: user.role
+          role: user.role,
+          userProfile: user.userProfile || 'work'
         };
       }
     })
   ],
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
+      // Initial sign in
       if (user) {
         token.id = user.id;
         token.username = user.username;
         token.role = user.role;
+        token.userProfile = user.userProfile;
       }
+      
+      // Handle updates to the session
+      if (trigger === 'update' && session?.user) {
+        // Update userProfile if it was changed
+        if (session.user.userProfile) {
+          token.userProfile = session.user.userProfile;
+          console.log(`JWT callback: Updated userProfile to ${token.userProfile}`);
+        }
+      }
+      
       return token;
     },
     async session({ session, token }) {
@@ -57,6 +70,7 @@ const authOptions = {
         session.user.id = token.id;
         session.user.username = token.username;
         session.user.role = token.role;
+        session.user.userProfile = token.userProfile;
       }
       return session;
     }
@@ -76,4 +90,4 @@ const authOptions = {
 
 const handler = NextAuth(authOptions);
 
-export { handler as GET, handler as POST }; 
+export { handler as GET, handler as POST, authOptions }; 

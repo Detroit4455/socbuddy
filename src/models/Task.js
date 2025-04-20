@@ -43,6 +43,18 @@ const taskSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  userProfile: {
+    type: String,
+    enum: ['work', 'personal'],
+    default: 'work'
+  },
+  profile_used: {
+    type: String,
+    trim: true,
+    default: function() {
+      return `${this.userProfile || 'work'} profile`;
+    }
+  },
   detail: {
     type: String,
     required: true,
@@ -58,7 +70,9 @@ const taskSchema = new mongoose.Schema({
     default: false
   }
 }, {
-  timestamps: true
+  timestamps: true,
+  toJSON: { virtuals: true },
+  toObject: { virtuals: true }
 });
 
 // Create indexes for better query performance
@@ -67,6 +81,8 @@ taskSchema.index({ owner: 1 });
 taskSchema.index({ dueDate: 1 });
 taskSchema.index({ startDate: 1 });
 taskSchema.index({ userId: 1 });
+taskSchema.index({ userProfile: 1 });
+taskSchema.index({ profile_used: 1 });
 
 // Create the model if it doesn't exist, otherwise use the existing one
 const Task = mongoose.models.Task || mongoose.model('Task', taskSchema);

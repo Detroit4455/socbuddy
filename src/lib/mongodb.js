@@ -1,4 +1,5 @@
 const mongoose = require('mongoose');
+const { MongoClient } = require('mongodb');
 
 if (!process.env.MONGODB_URI) {
   throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
@@ -20,6 +21,10 @@ let dbInfo = {
   connectionStatus: 'Disconnected',
   environment: env
 };
+
+// Cache client connection between invocations
+let cachedClient = null;
+let cachedDb = null;
 
 function detectDbProvider(uri) {
   if (uri.includes('docdb.amazonaws.com')) {
@@ -54,6 +59,48 @@ function parseDbInfo(uri) {
     host: 'Unknown',
     name: 'Unknown'
   };
+}
+
+async function connectToDatabase() {
+  if (cachedClient && cachedDb) {
+    console.log('[MongoDB] Using cached database connection');
+    return { client: cachedClient, db: cachedDb };
+  }
+
+  // Detect provider before connection
+  dbInfo.provider = detectDbProvider(uri);
+  const parsedInfo = parseDbInfo(uri);
+  dbInfo.host = parsedInfo.host;
+  dbInfo.name = parsedInfo.name;
+  
+  try {
+    const connectionOptions = {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    };
+    
+    // Add specific options for DocumentDB if needed
+    if (dbInfo.provider === 'AWS DocumentDB') {
+      connectionOptions.ssl = true;
+      connectionOptions.retryWrites = false;
+      if (process.env.DOCDB_TLS_CERT_PATH) {
+        connectionOptions.tlsCAFile = process.env.DOCDB_TLS_CERT_PATH;
+      }
+    }
+
+    console.log(`[MongoDB] Attempting to connect to ${dbInfo.provider} with direct client...`);
+    const client = await MongoClient.connect(uri, connectionOptions);
+    const db = client.db();
+
+    cachedClient = client;
+    cachedDb = db;
+    
+    console.log(`[MongoDB] Connected to ${dbInfo.provider} with direct client successfully`);
+    return { client, db };
+  } catch (error) {
+    console.error(`[MongoDB] ${dbInfo.provider} direct connection error:`, error);
+    throw error;
+  }
 }
 
 async function connectDB() {
@@ -109,4 +156,4 @@ function getDbInfo() {
   return dbInfo;
 }
 
-module.exports = { connectDB, getDbInfo }; 
+module.exports = { connectDB, getDbInfo, connectToDatabase }; 

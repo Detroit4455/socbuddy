@@ -1,0 +1,221 @@
+{
+  "project": {
+    "name": "SocBuddy",
+    "version": "0.1.0",
+    "description": "A comprehensive tool for SOC analysts and cybersecurity professionals"
+  },
+  "frontend": {
+    "framework": "Next.js 14.1.0",
+    "styling": [
+      "TailwindCSS",
+      "Custom CSS (globals.css)"
+    ],
+    "components": [
+      {
+        "name": "Navbar.js",
+        "purpose": "Main navigation component with user authentication status, profile switching, and links to application features"
+      },
+      {
+        "name": "ThemeToggle.js",
+        "purpose": "Toggle component for switching between dark and light mode"
+      },
+      {
+        "name": "habits/AddHabitModal.js",
+        "purpose": "Modal for creating and editing habits in the habit tracker"
+      },
+      {
+        "name": "Comment",
+        "purpose": "Reusable component for displaying comments with expandable text, URL formatting, and author information"
+      }
+    ]
+  },
+  "backend": {
+    "api": [
+      {
+        "route": "/api/auth/[...nextauth]",
+        "purpose": "NextAuth.js implementation for authentication"
+      },
+      {
+        "route": "/api/tasks",
+        "purpose": "CRUD operations for task management"
+      },
+      {
+        "route": "/api/tasks/statistics",
+        "purpose": "Aggregated statistics for tasks with filtering options"
+      },
+      {
+        "route": "/api/habits",
+        "purpose": "CRUD operations for habit tracking"
+      },
+      {
+        "route": "/api/user/profile",
+        "purpose": "Manage user profile preferences (work/personal)"
+      }
+    ],
+    "libraries": [
+      {
+        "name": "next-auth",
+        "purpose": "Authentication framework for Next.js"
+      },
+      {
+        "name": "bcryptjs",
+        "purpose": "Password hashing and verification"
+      },
+      {
+        "name": "jsonwebtoken",
+        "purpose": "JWT token generation and validation"
+      },
+      {
+        "name": "tesseract.js",
+        "purpose": "OCR functionality for text extraction from images"
+      }
+    ]
+  },
+  "database": {
+    "type": "MongoDB",
+    "odm": "Mongoose",
+    "connection": "src/lib/mongodb.js",
+    "models": [
+      {
+        "name": "User",
+        "fields": [
+          "username (String, required, unique)",
+          "email (String, required, unique)",
+          "password (String, required, hashed)",
+          "role (String, enum: user/admin)",
+          "userProfile (String, enum: work/personal)",
+          "createdAt (Date)"
+        ]
+      },
+      {
+        "name": "Task",
+        "fields": [
+          "name (String, required)",
+          "status (String, enum: Pending/In Progress/Completed/Awaiting)",
+          "dueDate (Date, required)",
+          "owner (String, required)",
+          "userId (String, required)",
+          "userProfile (String, enum: work/personal)",
+          "profile_used (String)",
+          "detail (String, required)",
+          "startDate (Date)",
+          "comments (Array of comment objects)",
+          "expanded (Boolean)"
+        ]
+      },
+      {
+        "name": "Habit",
+        "fields": [
+          "name (String, required)",
+          "description (String)",
+          "userId (ObjectId, ref: User)",
+          "owner (String, required)",
+          "color (String)",
+          "icon (String)",
+          "frequency (String, enum: daily/weekly/monthly)",
+          "targetDaysPerWeek (Number)",
+          "currentStreak (Number)",
+          "longestStreak (Number)",
+          "streakData (Array of streak objects)",
+          "createdAt (Date)"
+        ]
+      }
+    ]
+  },
+  "pages": [
+    {
+      "path": "/",
+      "purpose": "Home page with overview of available tools"
+    },
+    {
+      "path": "/auth/signin",
+      "purpose": "User authentication login page"
+    },
+    {
+      "path": "/auth/signup",
+      "purpose": "User registration page"
+    },
+    {
+      "path": "/dashboard",
+      "purpose": "User dashboard with personalized information"
+    },
+    {
+      "path": "/todo-list-manager",
+      "purpose": "Task management interface with filtering, commenting, and status tracking"
+    },
+    {
+      "path": "/todo-list-manager/statistics",
+      "purpose": "Visual analytics of task completion and statistics"
+    },
+    {
+      "path": "/habit-tracker",
+      "purpose": "Habit tracking interface for building consistent routines"
+    },
+    {
+      "path": "/habit-tracker/manage",
+      "purpose": "Interface for managing and editing existing habits"
+    },
+    {
+      "path": "/profile",
+      "purpose": "User profile management"
+    },
+    {
+      "path": "/administrator",
+      "purpose": "Admin dashboard for system management (role-restricted)"
+    },
+    {
+      "path": "/cybersecurity-resources",
+      "purpose": "Collection of cybersecurity resources and references"
+    },
+    {
+      "path": "/log-analyzer",
+      "purpose": "Tool for analyzing security logs"
+    },
+    {
+      "path": "/indicator-extractor",
+      "purpose": "Tool for extracting indicators from text or images"
+    }
+  ],
+  "utilities": [
+    {
+      "file": "src/lib/mongodb.js",
+      "purpose": "MongoDB connection management with caching"
+    },
+    {
+      "file": "src/middleware.js",
+      "purpose": "Request middleware for auth protection and routing logic"
+    }
+  ],
+  "features": [
+    {
+      "name": "Dark Mode",
+      "description": "System-wide theme switching between light and dark modes"
+    },
+    {
+      "name": "Profile Switching",
+      "description": "Toggle between work and personal contexts, with filtered data views"
+    },
+    {
+      "name": "Task Management",
+      "description": "Create, track, and comment on tasks with status updates"
+    },
+    {
+      "name": "Habit Tracking",
+      "description": "Record and visualize habit formation with streak tracking"
+    },
+    {
+      "name": "OCR Capability",
+      "description": "Extract text from images for indicator analysis"
+    }
+  ],
+  "deployment": {
+    "environment": "Next.js with Node.js runtime",
+    "scripts": [
+      "dev: Development server",
+      "build: Production build",
+      "start: Production server",
+      "start:dev: Development configuration",
+      "start:prod: Production configuration"
+    ]
+  }
+} 

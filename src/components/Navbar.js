@@ -1,18 +1,76 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { signOut, useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 
 const Navbar = () => {
-  const { data: session, status } = useSession();
+  const { data: session, status, update } = useSession();
   const router = useRouter();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState('work');
+
+  useEffect(() => {
+    if (session?.user?.userProfile) {
+      setUserProfile(session.user.userProfile);
+    }
+  }, [session]);
 
   const handleSignOut = async () => {
     await signOut({ redirect: false });
     router.push('/auth/signin');
+  };
+
+  const switchProfile = async (newProfile) => {
+    try {
+      console.log(`Attempting to switch profile to: ${newProfile}`);
+      
+      const response = await fetch('/api/user/profile', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ userProfile: newProfile }),
+      });
+
+      const responseData = await response.json();
+      console.log('Profile API response:', responseData);
+
+      if (response.ok) {
+        // Update local state
+        setUserProfile(newProfile);
+        console.log(`Local state updated to: ${newProfile}`);
+        
+        // Update session
+        console.log('Current session before update:', session);
+        try {
+          const result = await update({
+            ...session,
+            user: {
+              ...session.user,
+              userProfile: newProfile
+            }
+          });
+          console.log('Session update result:', result);
+        } catch (updateError) {
+          console.error('Error updating session:', updateError);
+        }
+        
+        // Get the updated session
+        console.log('Session after update attempt:', session);
+        
+        // Force reload to ensure session changes are applied
+        window.location.reload();
+        
+        // Close dropdown
+        setIsDropdownOpen(false);
+      } else {
+        console.error('Failed to switch profile:', responseData);
+      }
+    } catch (error) {
+      console.error('Error switching profile:', error);
+    }
   };
 
   return (
@@ -24,6 +82,11 @@ const Navbar = () => {
           className="w-6 h-6"
         />
         <span className="text-lg font-bold text-[rgba(9,203,177,0.823)]">SocBuddy</span>
+        {session && (
+          <span className="text-xs px-2 py-0.5 rounded-full bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)]">
+            {userProfile === 'work' ? 'Work' : 'Personal'}
+          </span>
+        )}
       </div>
       
       <ul className="flex space-x-4 items-center">
@@ -35,6 +98,11 @@ const Navbar = () => {
         <li>
           <Link href="/todo-list-manager" className="hover:text-[rgba(9,203,177,0.823)] transition-colors">
             Tasks
+          </Link>
+        </li>
+        <li>
+          <Link href="/habit-tracker" className="hover:text-[rgba(9,203,177,0.823)] transition-colors">
+            Habits
           </Link>
         </li>
         {session?.user?.role === 'admin' && (
@@ -61,6 +129,32 @@ const Navbar = () => {
             
             {isDropdownOpen && (
               <div className="absolute right-0 mt-2 w-48 bg-[#2a2a2a] rounded-md shadow-lg py-1 z-50 border border-[#444]">
+                <div className="px-4 py-2 border-b border-[#444]">
+                  <p className="text-xs text-[#999] mb-1">Switch Profile:</p>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => switchProfile('work')}
+                      className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                        userProfile === 'work'
+                          ? 'bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)]'
+                          : 'bg-[#333] text-[#e0e0e0] hover:bg-[#444]'
+                      }`}
+                    >
+                      Work
+                    </button>
+                    <button
+                      onClick={() => switchProfile('personal')}
+                      className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                        userProfile === 'personal'
+                          ? 'bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)]'
+                          : 'bg-[#333] text-[#e0e0e0] hover:bg-[#444]'
+                      }`}
+                    >
+                      Personal
+                    </button>
+                  </div>
+                </div>
+                
                 <Link 
                   href="/profile"
                   className="block px-4 py-2 text-sm text-[#e0e0e0] hover:bg-[#333] hover:text-[rgba(9,203,177,0.823)]"

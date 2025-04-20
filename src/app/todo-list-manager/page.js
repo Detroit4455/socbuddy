@@ -33,6 +33,11 @@ const TodoListManager = () => {
   const [dateFilter, setDateFilter] = useState('all');
   const [popup, setPopup] = useState({ show: false, message: '', type: 'info' });
   const tasksPerPage = 100;
+  const [darkMode, setDarkMode] = useState(false);
+  const [showDetails, setShowDetails] = useState(false);
+  const [showUrls, setShowUrls] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [lastProfileUsed, setLastProfileUsed] = useState('');
 
   // Update owner field with authenticated username when session is loaded
   useEffect(() => {
@@ -48,6 +53,46 @@ const TodoListManager = () => {
       }));
     }
   }, [session, newTask.owner, isGuest]);
+
+  // Add this to track profile changes
+  useEffect(() => {
+    if (session?.user?.userProfile) {
+      // Only reload if the profile has changed
+      if (lastProfileUsed !== session.user.userProfile) {
+        console.log(`Profile changed from ${lastProfileUsed} to ${session.user.userProfile}. Reloading tasks.`);
+        setLastProfileUsed(session.user.userProfile);
+        
+        // Reload tasks when profile changes
+        const loadTasks = async () => {
+          try {
+            setLoading(true);
+            const response = await fetch(`/api/tasks?profile=${session.user.userProfile}`);
+            if (!response.ok) {
+              throw new Error('Failed to load tasks after profile change');
+            }
+            const data = await response.json();
+            
+            // Ensure each task has required properties
+            const tasksWithDefaults = data.map(task => ({
+              ...task,
+              comments: task.comments || [],
+              expanded: false
+            }));
+            
+            setTasks(tasksWithDefaults);
+            setFilteredTasks(tasksWithDefaults);
+            setLoading(false);
+          } catch (error) {
+            console.error('Error loading tasks after profile change:', error);
+            setLoading(false);
+            showPopup('Error loading tasks after profile change.', 'error');
+          }
+        };
+        
+        loadTasks();
+      }
+    }
+  }, [session?.user?.userProfile]);
 
   // Function to show popup
   const showPopup = (message, type = 'info') => {
@@ -84,8 +129,9 @@ const TodoListManager = () => {
           }
         }
         
-        // Fetch tasks from our MongoDB API endpoint
-        const response = await fetch('/api/tasks');
+        // Fetch tasks from our MongoDB API endpoint with profile filter
+        const userProfile = session?.user?.userProfile || 'work';
+        const response = await fetch(`/api/tasks?profile=${userProfile}`);
         if (!response.ok) {
           throw new Error('Failed to load tasks from API');
         }
@@ -116,7 +162,7 @@ const TodoListManager = () => {
     };
 
     loadTasks();
-  }, [isGuest]);
+  }, [isGuest, session?.user?.userProfile]);
 
   // Function to filter tasks by date
   const filterTasksByDate = (tasks, filter) => {
@@ -203,14 +249,22 @@ const TodoListManager = () => {
     }
     
     if (newTask.name && newTask.dueDate && newTask.detail) {
+      const userProfile = session.user.userProfile || 'work';
+      console.log(`Creating task with userProfile: ${userProfile}`);
+      
       const updatedTasks = [...tasks, { 
         ...newTask, 
         comments: [],
         startDate: new Date().toISOString().split('T')[0],
         status: 'Pending', // Ensure status is Pending when adding task
         userId: session.user.id, // Add the user ID to the task
-        owner: session.user.username // Set owner to the current user's username
+        owner: session.user.username, // Set owner to the current user's username
+        userProfile: userProfile, // Set the user profile
+        profile_used: `${userProfile} profile` // Add profile_used field
       }];
+      
+      console.log(`New task with profile_used: ${updatedTasks[updatedTasks.length - 1].profile_used}`);
+      
       setTasks(updatedTasks);
       setNewTask({ 
         name: '', 
@@ -312,7 +366,8 @@ const TodoListManager = () => {
       text: newComment,
       date: formattedDate,
       timestamp: today.getTime(),
-      awaiting: isAwaitingResponse
+      awaiting: isAwaitingResponse,
+      username: session?.user?.username || 'Guest'  // Add username from session
     };
     
     const updatedTasks = tasks.map((task, idx) => {
@@ -352,6 +407,13 @@ const TodoListManager = () => {
       // Handle new tasks (those without an _id)
       const newTasks = updatedTasks.filter(task => !task._id);
       for (const newTask of newTasks) {
+        console.log(`Sending task to API with profile_used: ${newTask.profile_used}`);
+        
+        // Make sure the profile_used field is set if it's missing
+        if (!newTask.profile_used && newTask.userProfile) {
+          newTask.profile_used = `${newTask.userProfile} profile`;
+        }
+        
         const response = await fetch('/api/tasks', {
           method: 'POST',
           headers: {
@@ -363,6 +425,10 @@ const TodoListManager = () => {
         if (!response.ok) {
           throw new Error('Failed to create task');
         }
+        
+        // Log the created task
+        const createdTask = await response.json();
+        console.log(`API created task with profile_used: ${createdTask.profile_used}`);
       }
       
       // Handle modified tasks (those with an _id that still exist)
@@ -398,7 +464,8 @@ const TodoListManager = () => {
       }
       
       // After all operations, refresh tasks from API
-      const response = await fetch('/api/tasks');
+      const userProfile = session?.user?.userProfile || 'work';
+      const response = await fetch(`/api/tasks?profile=${userProfile}`);
       if (response.ok) {
         const refreshedTasks = await response.json();
         setTasks(refreshedTasks);
@@ -440,16 +507,140 @@ const TodoListManager = () => {
     setCurrentPage(pageNumber);
   };
 
+  // Update the Comment component
+  const Comment = ({ comment, session }) => {
+    const [expanded, setExpanded] = useState(false);
+    const maxVisibleLines = 4;
+    const lines = comment.text.split('\n');
+    const shouldShowExpand = lines.length > maxVisibleLines;
+
+    const formatComment = (text) => {
+      // Updated regex to match URLs with or without protocol
+      const urlRegex = /(https?:\/\/[^\s]+)|([a-zA-Z0-9-]+\.[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+([\/\?][^\s]*)?)/g;
+      
+      return text.split(urlRegex).map((part, index) => {
+        if (part && part.match(urlRegex)) {
+          // Add https:// if it doesn't start with a protocol
+          const url = part.startsWith('http') ? part : `https://${part}`;
+          return (
+            <a 
+              key={index} 
+              href={url} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-blue-500 hover:underline transition-colors duration-300"
+            >
+              {part}
+            </a>
+          );
+        }
+        return part;
+      });
+    };
+
+    return (
+      <div className="bg-[#1a1a1a] rounded-lg p-3 hover:bg-[#222] transition-all duration-300 mb-3">
+        <div className="flex justify-between items-start mb-1">
+          <span className="text-xs text-[rgba(9,203,177,0.823)] font-medium">
+            {comment.username || session?.user?.username || 'Guest'}
+          </span>
+          <span className="text-xs text-[#666]">
+            {comment.date}
+          </span>
+        </div>
+        <div className="font-mono text-sm text-[#e0e0e0] whitespace-pre-wrap leading-relaxed">
+          {expanded ? formatComment(comment.text) : formatComment(lines.slice(0, maxVisibleLines).join('\n'))}
+          {shouldShowExpand && (
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setExpanded(!expanded);
+              }}
+              className="ml-1 text-[rgba(9,203,177,0.823)] hover:text-[#00ff9d] transition-colors duration-300 text-xs"
+            >
+              {expanded ? 'Show less' : '... Show more'}
+            </button>
+          )}
+        </div>
+        {comment.awaiting && (
+          <div className="mt-1 text-xs text-orange-500">Awaiting response</div>
+        )}
+      </div>
+    );
+  };
+
+  // Add this function at the top level of the component
+  const calculateDaysSince = (startDate) => {
+    const start = new Date(startDate);
+    const now = new Date();
+    const diffTime = Math.abs(now - start);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return `${diffDays}d`;
+  };
+
+  // Update the extractUrls function
+  const extractUrls = (task) => {
+    const urlRegex = /(https?:\/\/[^\s]+)|([a-zA-Z0-9-]+\.[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+([\/\?][^\s]*)?)/g;
+    const urls = [];
+    
+    // Extract from detail
+    if (task.detail) {
+      const detailUrls = task.detail.match(urlRegex);
+      if (detailUrls) {
+        urls.push(...detailUrls);
+      }
+    }
+    
+    // Extract from comments
+    if (task.comments && task.comments.length > 0) {
+      task.comments.forEach(comment => {
+        if (comment.text) {
+          const commentUrls = comment.text.match(urlRegex);
+          if (commentUrls) {
+            urls.push(...commentUrls);
+          }
+        }
+      });
+    }
+    
+    // Format URLs (add https:// if missing)
+    return [...new Set(urls)].map(url => 
+      url.startsWith('http') ? url : `https://${url}`
+    );
+  };
+
+  // Update the formatDate function to include time
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      day: 'numeric',
+      month: 'long',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: true
+    });
+  };
+
+  // Update the formatDateShort function for due date
+  const formatDateShort = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-US', {
+      day: 'numeric',
+      month: 'long'
+    });
+  };
+
   return (
-    <div className="min-h-screen bg-[#121212] py-10 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[#121212] py-6 px-2 sm:py-10 sm:px-6 lg:px-8">
       <Navbar />
       
       {/* Add Popup to the top level */}
       {popup.show && <Popup message={popup.message} type={popup.type} />}
       
-      <div className="max-w-4xl mx-auto bg-[#1e1e1e] rounded-2xl shadow-lg p-6 border border-[#444] mt-16">
-        <div className="flex justify-between items-center mb-6">
-          <div className="w-1/4">
+      <div className="max-w-4xl mx-auto bg-[#1e1e1e] rounded-2xl shadow-lg p-3 sm:p-6 border border-[#444] mt-16">
+        {/* Header section - stack on mobile */}
+        <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-2 sm:space-y-0">
+          <div className="w-full sm:w-1/4 text-center sm:text-left">
             {session && (
               <p className="text-sm text-[rgba(9,203,177,0.823)]">
                 Welcome, {session.user.username}!
@@ -461,8 +652,8 @@ const TodoListManager = () => {
               </p>
             )}
           </div>
-          <h1 className="text-2xl font-semibold text-white text-center w-2/4">Todo List Manager</h1>
-          <div className="w-1/4 flex justify-end">
+          <h1 className="text-2xl font-semibold text-white w-full sm:w-2/4 text-center">Todo List Manager</h1>
+          <div className="w-full sm:w-1/4 flex justify-center sm:justify-end">
             {isGuest && (
               <Link href="/auth/signin?callbackUrl=/todo-list-manager" className="text-yellow-500 hover:underline">
                 Sign in
@@ -477,8 +668,8 @@ const TodoListManager = () => {
           </div>
         )}
         
-        {/* Task Creation Form - Show to all users but make inputs normal for guests */}
-        <div className="mb-4 grid grid-cols-2 gap-2">
+        {/* Task Creation Form - make responsive */}
+        <div className="mb-4 grid grid-cols-1 sm:grid-cols-2 gap-2">
           <input
             type="text"
             name="name"
@@ -494,16 +685,16 @@ const TodoListManager = () => {
             onChange={handleInputChange}
             className="border border-[#444] bg-[#2a2a2a] text-[#e0e0e0] py-1.5 px-4 rounded focus:outline-none focus:ring-2 focus:ring-[rgba(9,203,177,0.823)]"
           />
-          <div className="col-span-2 grid grid-cols-3 gap-2">
+          <div className="col-span-1 sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-2">
             <textarea
               name="detail"
               value={newTask.detail}
               onChange={handleInputChange}
               placeholder="Task Detail"
-              className="col-span-2 border border-[#444] bg-[#2a2a2a] text-[#e0e0e0] py-1.5 px-4 rounded focus:outline-none focus:ring-2 focus:ring-[rgba(9,203,177,0.823)] resize-none"
+              className="col-span-1 sm:col-span-2 border border-[#444] bg-[#2a2a2a] text-[#e0e0e0] py-1.5 px-4 rounded focus:outline-none focus:ring-2 focus:ring-[rgba(9,203,177,0.823)] resize-none"
               rows="3"
             />
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-row sm:flex-col gap-2">
               <button
                 onClick={addTask}
                 className="flex-1 py-2 px-4 rounded-lg transition-all duration-300 bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)] hover:bg-[rgba(9,203,177,0.2)] hover:shadow-[0_0_20px_rgba(45,169,164,0.3)]"
@@ -522,13 +713,13 @@ const TodoListManager = () => {
           </div>
         </div>
         
-        <div className="flex items-center justify-between mb-4">
-          {/* Date Filter Dropdown */}
-          <div className="flex items-center mr-4">
+        {/* Filters section - stack on mobile */}
+        <div className="flex flex-col sm:flex-row items-center justify-between mb-4 space-y-2 sm:space-y-0">
+          <div className="w-full sm:w-auto mb-2 sm:mb-0">
             <select
               value={dateFilter}
               onChange={(e) => setDateFilter(e.target.value)}
-              className="bg-[#1e1e1e] text-[#e0e0e0] py-1.5 px-4 rounded-lg border border-[#444] focus:outline-none focus:ring-2 focus:ring-[rgba(9,203,177,0.823)] hover:bg-[#2a2a2a] transition-all duration-300"
+              className="w-full sm:w-auto bg-[#1e1e1e] text-[#e0e0e0] py-1.5 px-4 rounded-lg border border-[#444] focus:outline-none focus:ring-2 focus:ring-[rgba(9,203,177,0.823)] hover:bg-[#2a2a2a] transition-all duration-300"
             >
               <option value="all">All Time</option>
               <option value="1day">Last 24 Hours</option>
@@ -538,62 +729,64 @@ const TodoListManager = () => {
             </select>
           </div>
 
-          {/* Status Filter Tabs */}
-          <div className="grid grid-cols-5 gap-0 bg-[#1e1e1e] rounded-lg overflow-hidden border border-[#444]">
-            <button
-              onClick={() => setStatusFilter('all')}
-              className={`py-1.5 px-6 transition-all duration-300 ${
-                statusFilter === 'all'
-                ? 'bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)]'
-                : 'text-[#e0e0e0] hover:bg-[rgba(9,203,177,0.1)] hover:text-[rgba(9,203,177,0.823)]'
-              }`}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setStatusFilter('Pending')}
-              className={`py-1.5 px-6 transition-all duration-300 ${
-                statusFilter === 'Pending'
-                ? 'bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)]'
-                : 'text-[#e0e0e0] hover:bg-[rgba(9,203,177,0.1)] hover:text-[rgba(9,203,177,0.823)]'
-              }`}
-            >
-              Pending
-            </button>
-            <button
-              onClick={() => setStatusFilter('In Progress')}
-              className={`py-1.5 px-6 transition-all duration-300 ${
-                statusFilter === 'In Progress'
-                ? 'bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)]'
-                : 'text-[#e0e0e0] hover:bg-[rgba(9,203,177,0.1)] hover:text-[rgba(9,203,177,0.823)]'
-              }`}
-            >
-              In Progress
-            </button>
-            <button
-              onClick={() => setStatusFilter('Awaiting')}
-              className={`py-1.5 px-6 transition-all duration-300 ${
-                statusFilter === 'Awaiting'
-                ? 'bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)]'
-                : 'text-[#e0e0e0] hover:bg-[rgba(9,203,177,0.1)] hover:text-[rgba(9,203,177,0.823)]'
-              }`}
-            >
-              Awaiting
-            </button>
-            <button
-              onClick={() => setStatusFilter('Completed')}
-              className={`py-1.5 px-6 transition-all duration-300 ${
-                statusFilter === 'Completed'
-                ? 'bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)]'
-                : 'text-[#e0e0e0] hover:bg-[rgba(9,203,177,0.1)] hover:text-[rgba(9,203,177,0.823)]'
-              }`}
-            >
-              Completed
-            </button>
+          {/* Status Filter Tabs - scroll horizontally on mobile */}
+          <div className="w-full sm:w-auto overflow-x-auto">
+            <div className="flex sm:grid sm:grid-cols-5 min-w-max sm:min-w-0 bg-[#1e1e1e] rounded-lg overflow-hidden border border-[#444]">
+              <button
+                onClick={() => setStatusFilter('all')}
+                className={`py-1.5 px-6 transition-all duration-300 ${
+                  statusFilter === 'all'
+                  ? 'bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)]'
+                  : 'text-[#e0e0e0] hover:bg-[rgba(9,203,177,0.1)] hover:text-[rgba(9,203,177,0.823)]'
+                }`}
+              >
+                All
+              </button>
+              <button
+                onClick={() => setStatusFilter('Pending')}
+                className={`py-1.5 px-6 transition-all duration-300 ${
+                  statusFilter === 'Pending'
+                  ? 'bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)]'
+                  : 'text-[#e0e0e0] hover:bg-[rgba(9,203,177,0.1)] hover:text-[rgba(9,203,177,0.823)]'
+                }`}
+              >
+                Pending
+              </button>
+              <button
+                onClick={() => setStatusFilter('In Progress')}
+                className={`py-1.5 px-6 transition-all duration-300 ${
+                  statusFilter === 'In Progress'
+                  ? 'bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)]'
+                  : 'text-[#e0e0e0] hover:bg-[rgba(9,203,177,0.1)] hover:text-[rgba(9,203,177,0.823)]'
+                }`}
+              >
+                In Progress
+              </button>
+              <button
+                onClick={() => setStatusFilter('Awaiting')}
+                className={`py-1.5 px-6 transition-all duration-300 ${
+                  statusFilter === 'Awaiting'
+                  ? 'bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)]'
+                  : 'text-[#e0e0e0] hover:bg-[rgba(9,203,177,0.1)] hover:text-[rgba(9,203,177,0.823)]'
+                }`}
+              >
+                Awaiting
+              </button>
+              <button
+                onClick={() => setStatusFilter('Completed')}
+                className={`py-1.5 px-6 transition-all duration-300 ${
+                  statusFilter === 'Completed'
+                  ? 'bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)]'
+                  : 'text-[#e0e0e0] hover:bg-[rgba(9,203,177,0.1)] hover:text-[rgba(9,203,177,0.823)]'
+                }`}
+              >
+                Completed
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Search Bar */}
+        {/* Search Bar - full width on mobile */}
         <div className="mb-4">
           <input
             type="text"
@@ -613,208 +806,297 @@ const TodoListManager = () => {
           </div>
         ) : (
           <>
-            <table className="w-full text-left rounded-lg overflow-hidden">
-              <thead className="bg-[#2a2a2a]">
-                <tr>
-                  <th className="py-3 px-4 text-[rgba(9,203,177,0.823)]">Task Name</th>
-                  <th className="py-3 px-4 text-[rgba(9,203,177,0.823)]">Status</th>
-                  <th className="py-3 px-4 text-[rgba(9,203,177,0.823)]">Due Date</th>
-                  <th className="py-3 px-4 text-[rgba(9,203,177,0.823)]">Owner</th>
-                  <th className="py-3 px-4 text-[rgba(9,203,177,0.823)]">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {currentTasks.map((task, index) => {
-                  // Find the actual index in the original tasks array
-                  const originalIndex = tasks.findIndex(t => 
-                    t.name === task.name && 
-                    t.dueDate === task.dueDate && 
-                    t.owner === task.owner
-                  );
-                  
-                  return (
-                    <React.Fragment key={index}>
-                      <tr 
-                        className={`border-b border-[#444] hover:bg-[#2a2a2a] cursor-pointer ${expandedTask === originalIndex ? 'bg-[#2a2a2a]' : ''}`}
-                        onClick={() => toggleExpand(originalIndex)}
-                      >
-                        <td className="py-2 px-4 text-[#e0e0e0]">
-                          {editingTask === originalIndex ? (
-                            <input
-                              type="text"
-                              value={task.name}
-                              onChange={(e) => handleCellEdit(originalIndex, 'name', e.target.value)}
-                              className="w-full bg-[#2a2a2a] text-[#e0e0e0] p-1 rounded border border-[#444]"
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          ) : (
-                            <div 
-                              className={`truncate max-w-[300px] ${expandedTask === originalIndex ? 'whitespace-normal' : ''}`} 
-                              title={task.name}
-                            >
-                              {task.name}
-                            </div>
-                          )}
-                        </td>
-                        <td className={`py-2 px-4 font-semibold ${getStatusColor(task.status)}`}>
-                          {editingTask === originalIndex ? (
-                            <select
-                              value={task.status}
-                              onChange={(e) => handleCellEdit(originalIndex, 'status', e.target.value)}
-                              className="bg-[#2a2a2a] text-[#e0e0e0] p-1 rounded border border-[#444]"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <option value="Pending">Pending</option>
-                              <option value="In Progress">In Progress</option>
-                              <option value="Completed">Completed</option>
-                            </select>
-                          ) : (
-                            task.status
-                          )}
-                        </td>
-                        <td className="py-2 px-4 text-[#e0e0e0]">
-                          {editingTask === originalIndex ? (
-                            <input
-                              type="date"
-                              value={task.dueDate}
-                              onChange={(e) => handleCellEdit(originalIndex, 'dueDate', e.target.value)}
-                              className="bg-[#2a2a2a] text-[#e0e0e0] p-1 rounded border border-[#444]"
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          ) : (
-                            task.dueDate
-                          )}
-                        </td>
-                        <td className="py-2 px-4 text-[#e0e0e0]">
-                          {task.owner}
-                        </td>
-                        <td className="py-2 px-4 text-[#e0e0e0]">
-                          <div className="flex space-x-2">
-                            {!isGuest ? (
-                              <>
-                                <button
-                                  onClick={(e) => toggleEditMode(originalIndex, e)}
-                                  className="text-[rgba(9,203,177,0.823)] hover:text-[#00ff9d] transition-colors duration-300"
-                                  title="Edit Task"
-                                >
-                                  {editingTask === originalIndex ? '✓' : '✎'}
-                                </button>
-                                <button
-                                  onClick={(e) => toggleCommentMode(originalIndex, e)}
-                                  className={`text-[rgba(9,203,177,0.823)] hover:text-[#00ff9d] transition-colors duration-300 ${commentingTask === originalIndex ? 'text-[#00ff9d]' : ''}`}
-                                  title="Add Comment"
-                                >
-                                  💬
-                                </button>
-                                <button
-                                  onClick={(e) => markAsComplete(originalIndex, e)}
-                                  className="text-[rgba(9,203,177,0.823)] hover:text-[#00ff9d] transition-colors duration-300"
-                                  title="Mark as Complete"
-                                >
-                                  ✅
-                                </button>
-                              </>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left rounded-lg overflow-hidden">
+                <thead className="bg-[#2a2a2a]">
+                  <tr>
+                    <th className="py-3 px-4 text-[rgba(9,203,177,0.823)] whitespace-nowrap">Task Name</th>
+                    <th className="py-3 px-4 text-[rgba(9,203,177,0.823)] whitespace-nowrap">Status</th>
+                    <th className="py-3 px-4 text-[rgba(9,203,177,0.823)] whitespace-nowrap">Due Date</th>
+                    <th className="py-3 px-4 text-[rgba(9,203,177,0.823)] whitespace-nowrap">Owner</th>
+                    <th className="py-3 px-4 text-[rgba(9,203,177,0.823)] whitespace-nowrap">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {currentTasks.map((task, index) => {
+                    // Find the actual index in the original tasks array
+                    const originalIndex = tasks.findIndex(t => 
+                      t.name === task.name && 
+                      t.dueDate === task.dueDate && 
+                      t.owner === task.owner
+                    );
+                    
+                    return (
+                      <React.Fragment key={index}>
+                        <tr 
+                          className={`border-b border-[#444] hover:bg-[#2a2a2a] cursor-pointer ${expandedTask === originalIndex ? 'bg-[#2a2a2a]' : ''}`}
+                          onClick={() => toggleExpand(originalIndex)}
+                        >
+                          <td className="py-2 px-4 text-[#e0e0e0]">
+                            {editingTask === originalIndex ? (
+                              <input
+                                type="text"
+                                value={task.name}
+                                onChange={(e) => handleCellEdit(originalIndex, 'name', e.target.value)}
+                                className="w-full bg-[#2a2a2a] text-[#e0e0e0] p-1 rounded border border-[#444]"
+                                onClick={(e) => e.stopPropagation()}
+                              />
                             ) : (
-                              <span className="text-yellow-500 text-xs">Sign in to edit</span>
+                              <div 
+                                className={`truncate max-w-[300px] ${expandedTask === originalIndex ? 'whitespace-normal' : ''}`} 
+                                title={task.name}
+                              >
+                                {task.name}
+                              </div>
                             )}
-                          </div>
-                        </td>
-                      </tr>
-                      {expandedTask === originalIndex && (
-                        <tr className="bg-[#2a2a2a]">
-                          <td colSpan="5" className="py-2 px-4 text-[#bbb]">
-                            {/* Comments Section */}
-                            <div className="mb-4">
-                              <h3 className="text-[rgba(9,203,177,0.823)] font-semibold mb-2">Comments</h3>
-                              
-                              {/* Add Comment Form (visible in comment mode or edit mode) */}
-                              {(commentingTask === originalIndex || editingTask === originalIndex) && (
-                                <div className="mb-3 flex flex-col">
-                                  <div className="flex items-center mb-2">
-                                    <input
-                                      type="checkbox"
-                                      checked={isAwaitingResponse}
-                                      onChange={(e) => setIsAwaitingResponse(e.target.checked)}
-                                      className="mr-2 h-4 w-4 text-[rgba(9,203,177,0.823)] border-[#444] rounded focus:ring-[rgba(9,203,177,0.823)]"
-                                    />
-                                    <span className="text-[#e0e0e0]">Waiting for Response</span>
-                                  </div>
-                                  <div className="flex">
-                                    <textarea
-                                      value={newComment}
-                                      onChange={handleCommentChange}
-                                      placeholder="Add a comment..."
-                                      className="flex-grow bg-[#2a2a2a] text-[#e0e0e0] p-2 rounded border border-[#444] resize-none mr-2"
-                                      rows="2"
-                                      onClick={(e) => e.stopPropagation()}
-                                    />
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        addComment(originalIndex);
-                                      }}
-                                      className="bg-[#1e1e1e] hover:bg-[#2a2a2a] text-[rgba(9,203,177,0.823)] py-2 px-4 rounded border border-[rgba(9,203,177,0.823)] hover:shadow-[0_0_20px_rgba(45,169,164,0.3)] transition-all duration-300 self-end"
-                                    >
-                                      Add
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-                              
-                              {/* Display Comments */}
-                              {task.comments && task.comments.length > 0 ? (
-                                <div className="space-y-2">
-                                  {task.comments.map((comment, commentIndex) => (
-                                    <div key={commentIndex} className="border-l-2 border-[#444] pl-3 py-1">
-                                      <div className="flex justify-between items-start">
-                                        <div className="text-[#e0e0e0]">
-                                          {comment.text}
-                                          {comment.awaiting && (
-                                            <span className="ml-2 text-[rgba(9,203,177,0.823)] text-sm">(Awaiting Response)</span>
-                                          )}
-                                        </div>
-                                        <div className="text-xs text-[rgba(9,203,177,0.823)] ml-2">{comment.date}</div>
-                                      </div>
-                                    </div>
-                                  ))}
-                                </div>
+                          </td>
+                          <td className={`py-2 px-4 font-semibold ${getStatusColor(task.status)}`}>
+                            {editingTask === originalIndex ? (
+                              <select
+                                value={task.status}
+                                onChange={(e) => handleCellEdit(originalIndex, 'status', e.target.value)}
+                                className="bg-[#2a2a2a] text-[#e0e0e0] p-1 rounded border border-[#444]"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <option value="Pending">Pending</option>
+                                <option value="In Progress">In Progress</option>
+                                <option value="Completed">Completed</option>
+                              </select>
+                            ) : (
+                              task.status
+                            )}
+                          </td>
+                          <td className="py-2 px-4 text-[#e0e0e0]">
+                            {editingTask === originalIndex ? (
+                              <input
+                                type="date"
+                                value={task.dueDate}
+                                onChange={(e) => handleCellEdit(originalIndex, 'dueDate', e.target.value)}
+                                className="bg-[#2a2a2a] text-[#e0e0e0] p-1 rounded border border-[#444]"
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            ) : (
+                              formatDateShort(task.dueDate)
+                            )}
+                          </td>
+                          <td className="py-2 px-4 text-[#e0e0e0]">
+                            {task.owner}
+                          </td>
+                          <td className="py-2 px-4 text-[#e0e0e0]">
+                            <div className="flex space-x-2">
+                              {!isGuest ? (
+                                <>
+                                  <button
+                                    onClick={(e) => toggleEditMode(originalIndex, e)}
+                                    className="text-[rgba(9,203,177,0.823)] hover:text-[#00ff9d] transition-colors duration-300"
+                                    title="Edit Task"
+                                  >
+                                    {editingTask === originalIndex ? '✓' : '✎'}
+                                  </button>
+                                  <button
+                                    onClick={(e) => toggleCommentMode(originalIndex, e)}
+                                    className={`text-[rgba(9,203,177,0.823)] hover:text-[#00ff9d] transition-colors duration-300 ${commentingTask === originalIndex ? 'text-[#00ff9d]' : ''}`}
+                                    title="Add Comment"
+                                  >
+                                    💬
+                                  </button>
+                                  <button
+                                    onClick={(e) => markAsComplete(originalIndex, e)}
+                                    className="text-[rgba(9,203,177,0.823)] hover:text-[#00ff9d] transition-colors duration-300"
+                                    title="Mark as Complete"
+                                  >
+                                    ✅
+                                  </button>
+                                </>
                               ) : (
-                                <div className="text-[#666] italic">No comments yet</div>
+                                <span className="text-yellow-500 text-xs">Sign in to edit</span>
                               )}
-                            </div>
-                            
-                            {/* Details Section */}
-                            <div>
-                              <h3 className="text-[rgba(9,203,177,0.823)] font-semibold mb-2">Details</h3>
-                              {editingTask === originalIndex ? (
-                                <textarea
-                                  value={task.detail}
-                                  onChange={(e) => handleCellEdit(originalIndex, 'detail', e.target.value)}
-                                  className="w-full bg-[#2a2a2a] text-[#e0e0e0] p-2 rounded border border-[#444] resize-none"
-                                  rows="3"
-                                  onClick={(e) => e.stopPropagation()}
-                                />
-                              ) : (
-                                <div className="whitespace-pre-line">
-                                  {task.detail}
-                                </div>
-                              )}
-                            </div>
-                            
-                            {/* Start Date Display */}
-                            <div className="mt-4 text-xs text-[#666]">
-                              <span className="text-[rgba(9,203,177,0.823)]">Start Date:</span> {task.startDate || 'Not set'}
                             </div>
                           </td>
                         </tr>
-                      )}
-                    </React.Fragment>
-                  );
-                })}
-              </tbody>
-            </table>
+                        {expandedTask === originalIndex && (
+                          <tr className="bg-[#2a2a2a]">
+                            <td colSpan="5" className="py-2 px-4 text-[#bbb]">
+                              {/* Task Details Capsules */}
+                              <div className="flex flex-wrap gap-2 mb-4">
+                                <span className="px-3 py-1.5 rounded-full text-xs bg-[#333] text-[#e0e0e0] hover:bg-[#444] transition-all duration-300">
+                                  Start: {formatDate(task.startDate)}
+                                </span>
+                                <span className="px-3 py-1.5 rounded-full text-xs bg-[#333] text-[#e0e0e0] hover:bg-[#444] transition-all duration-300">
+                                  Due: {formatDateShort(task.dueDate)}
+                                </span>
+                                <span className="px-3 py-1.5 rounded-full text-xs bg-[#333] text-[#e0e0e0] hover:bg-[#444] transition-all duration-300">
+                                  Owner: {task.owner}
+                                </span>
+                                <span className="px-3 py-1.5 rounded-full text-xs bg-[#333] text-[#e0e0e0] hover:bg-[#444] transition-all duration-300">
+                                  Status: <span className={getStatusColor(task.status)}>{task.status}</span>
+                                </span>
+                                <span className="px-3 py-1.5 rounded-full text-xs bg-[#333] text-[#e0e0e0] hover:bg-[#444] transition-all duration-300">
+                                  Open since: {calculateDaysSince(task.startDate)}
+                                </span>
+                                {task.profile_used ? (
+                                  <span className="px-3 py-1.5 rounded-full text-xs bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)] hover:bg-[rgba(9,203,177,0.25)] transition-all duration-300">
+                                    {task.profile_used}
+                                  </span>
+                                ) : task.userProfile ? (
+                                  <span className="px-3 py-1.5 rounded-full text-xs bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)] hover:bg-[rgba(9,203,177,0.25)] transition-all duration-300">
+                                    {task.userProfile} profile
+                                  </span>
+                                ) : null}
+                                <button
+                                  onClick={() => {
+                                    setSelectedTask(task);
+                                    setShowDetails(!showDetails);
+                                    setShowUrls(false);
+                                  }}
+                                  className="px-3 py-1.5 rounded-full text-xs bg-[#2a2a2a] text-[#e0e0e0] hover:bg-[#333] transition-all duration-300"
+                                >
+                                  Details
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setSelectedTask(task);
+                                    setShowUrls(!showUrls);
+                                    setShowDetails(false);
+                                  }}
+                                  className="px-3 py-1.5 rounded-full text-xs bg-[#2a2a2a] text-[#e0e0e0] hover:bg-[#333] transition-all duration-300"
+                                >
+                                  URLs ({extractUrls(task).length})
+                                </button>
+                              </div>
+
+                              {/* Details Modal */}
+                              {showDetails && selectedTask === task && (
+                                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                                  <div className="bg-[#1e1e1e] p-4 sm:p-6 rounded-lg max-w-2xl w-full mx-2 sm:mx-4">
+                                    <div className="flex justify-between items-center mb-4">
+                                      <h3 className="text-lg font-semibold text-[rgba(9,203,177,0.823)]">Task Details</h3>
+                                      <button
+                                        onClick={() => setShowDetails(false)}
+                                        className="text-[#666] hover:text-[#e0e0e0] transition-colors duration-300"
+                                      >
+                                        ✕
+                                      </button>
+                                    </div>
+                                    <div className="font-mono text-sm text-[#e0e0e0] whitespace-pre-wrap">
+                                      {task.detail}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* URLs Modal */}
+                              {showUrls && selectedTask === task && (
+                                <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+                                  <div className="bg-[#1e1e1e] p-4 sm:p-6 rounded-lg max-w-2xl w-full mx-2 sm:mx-4">
+                                    <div className="flex justify-between items-center mb-4">
+                                      <h3 className="text-lg font-semibold text-[rgba(9,203,177,0.823)]">URLs in Task</h3>
+                                      <button
+                                        onClick={() => setShowUrls(false)}
+                                        className="text-[#666] hover:text-[#e0e0e0] transition-colors duration-300"
+                                      >
+                                        ✕
+                                      </button>
+                                    </div>
+                                    <div className="space-y-2">
+                                      {extractUrls(task).map((url, index) => (
+                                        <a
+                                          key={index}
+                                          href={url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="block p-2 bg-[#2a2a2a] rounded hover:bg-[#333] transition-colors duration-300 text-blue-500 hover:text-blue-400"
+                                        >
+                                          {url}
+                                        </a>
+                                      ))}
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+
+                              {/* Comments Section */}
+                              <div className="mb-4">
+                                <h3 className="text-[rgba(9,203,177,0.823)] font-semibold mb-2">Comments</h3>
+                                
+                                {/* Add Comment Form */}
+                                {(commentingTask === originalIndex || editingTask === originalIndex) && (
+                                  <div className="mb-3 flex flex-col">
+                                    <div className="flex items-center mb-2">
+                                      <input
+                                        type="checkbox"
+                                        checked={isAwaitingResponse}
+                                        onChange={(e) => setIsAwaitingResponse(e.target.checked)}
+                                        className="mr-2 h-4 w-4 text-[rgba(9,203,177,0.823)] border-[#444] rounded focus:ring-[rgba(9,203,177,0.823)]"
+                                      />
+                                      <span className="text-[#e0e0e0]">Waiting for Response</span>
+                                    </div>
+                                    <div className="flex">
+                                      <textarea
+                                        value={newComment}
+                                        onChange={handleCommentChange}
+                                        placeholder="Add a comment..."
+                                        className="flex-grow bg-[#1a1a1a] text-[#e0e0e0] p-2 rounded border border-[#444] resize-none mr-2 font-mono whitespace-pre-wrap"
+                                        rows="4"
+                                        onClick={(e) => e.stopPropagation()}
+                                      />
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          addComment(originalIndex);
+                                        }}
+                                        className="bg-[#1e1e1e] hover:bg-[#2a2a2a] text-[rgba(9,203,177,0.823)] py-2 px-4 rounded border border-[rgba(9,203,177,0.823)] hover:shadow-[0_0_20px_rgba(45,169,164,0.3)] transition-all duration-300 self-end"
+                                      >
+                                        Add
+                                      </button>
+                                    </div>
+                                  </div>
+                                )}
+                                
+                                {/* Display Comments */}
+                                {task.comments && task.comments.length > 0 ? (
+                                  <div className="space-y-2">
+                                    {task.comments.map((comment, commentIndex) => (
+                                      <Comment 
+                                        key={commentIndex} 
+                                        comment={comment} 
+                                        session={session} 
+                                      />
+                                    ))}
+                                  </div>
+                                ) : (
+                                  <div className="text-[#666] italic">No comments yet</div>
+                                )}
+                              </div>
+                              
+                              {/* Details Section */}
+                              <div>
+                                <h3 className="text-[rgba(9,203,177,0.823)] font-semibold mb-2">Details</h3>
+                                {editingTask === originalIndex ? (
+                                  <textarea
+                                    value={task.detail}
+                                    onChange={(e) => handleCellEdit(originalIndex, 'detail', e.target.value)}
+                                    className="w-full bg-[#2a2a2a] text-[#e0e0e0] p-2 rounded border border-[#444] resize-none"
+                                    rows="3"
+                                    onClick={(e) => e.stopPropagation()}
+                                  />
+                                ) : (
+                                  <div className="whitespace-pre-line">
+                                    {task.detail}
+                                  </div>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
             
-            {/* Pagination */}
+            {/* Pagination - center on mobile */}
             {totalPages > 1 && (
               <div className="flex justify-center mt-4 space-x-2">
                 <button

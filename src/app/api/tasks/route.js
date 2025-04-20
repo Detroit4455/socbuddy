@@ -18,6 +18,7 @@ export async function GET(request) {
     });
     
     const userId = token?.id;
+    const userProfile = token?.userProfile || 'work';
     const isGuest = !userId; // Flag to identify guest users
     
     console.log(`[Tasks API] User authentication status: ${isGuest ? 'Guest' : 'Authenticated'}`);
@@ -26,14 +27,16 @@ export async function GET(request) {
     const status = searchParams.get('status');
     const dateFilter = searchParams.get('dateFilter');
     const searchTerm = searchParams.get('searchTerm');
+    const profile = searchParams.get('profile') || userProfile;
 
     let query = {};
     
     // For non-signed in users, only show tasks with owner="guest"
-    // For logged-in users, only show their tasks
+    // For logged-in users, only show their tasks based on profile
     if (userId) {
       query.userId = userId;
-      console.log(`[Tasks API] Filtering tasks for userId: ${userId}`);
+      query.userProfile = profile;
+      console.log(`[Tasks API] Filtering tasks for userId: ${userId}, profile: ${profile}`);
     } else {
       query.owner = "guest";
       console.log(`[Tasks API] Filtering tasks for guest users (owner='guest')`);
@@ -106,12 +109,17 @@ export async function POST(request) {
       secret: process.env.NEXTAUTH_SECRET,
     });
     
-    // Add the userId to the task
+    // Add the userId, userProfile, and profile_used to the task
     if (token?.id) {
+      const userProfile = token.userProfile || 'work';
       body.userId = token.id;
+      body.userProfile = userProfile;
+      body.profile_used = `${userProfile} profile`;
+      console.log(`[Tasks API] Creating task with profile_used: ${body.profile_used}`);
     }
     
     const task = await Task.create(body);
+    console.log(`[Tasks API] Task created with ID: ${task._id}, profile_used: ${task.profile_used}`);
     return NextResponse.json(task);
   } catch (error) {
     console.error('Error creating task:', error);

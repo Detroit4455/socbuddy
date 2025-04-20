@@ -28,6 +28,11 @@ const userSchema = new mongoose.Schema({
     enum: ['user', 'admin'],
     default: 'user'
   },
+  userProfile: {
+    type: String,
+    enum: ['work', 'personal'],
+    default: 'work'
+  },
   createdAt: {
     type: Date,
     default: Date.now
