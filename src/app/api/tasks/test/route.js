@@ -11,6 +11,7 @@ export async function GET() {
       name: `Test Task ${new Date().toISOString()}`,
       status: 'Pending',
       owner: 'System Tester',
+      userId: '000000000000000000000000',
       detail: 'This is a test task to verify MongoDB connection',
       startDate: new Date(),
       dueDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),

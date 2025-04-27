@@ -39,7 +39,7 @@ export async function middleware(request) {
   }
 
   // Protect dashboard, admin, and other sensitive pages
-  const protectedPaths = ['/dashboard', '/administrator'];
+  const protectedPaths = ['/dashboard', '/administrator', '/admin'];
   const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path));
 
   if (isProtectedPath) {
@@ -48,16 +48,11 @@ export async function middleware(request) {
       const redirectUrl = new URL('/auth/signin', request.url);
       redirectUrl.searchParams.set('callbackUrl', pathname);
 
-      // Add administrator to the callbackUrl if needed
-      if (pathname.startsWith('/administrator')) {
-        redirectUrl.searchParams.set('callbackUrl', pathname);
-      }
-
       return NextResponse.redirect(redirectUrl);
     }
 
     // Check for admin paths
-    if (pathname.startsWith('/administrator') && token.role !== 'admin') {
+    if ((pathname.startsWith('/administrator') || pathname.startsWith('/admin')) && token.role !== 'admin') {
       // Redirect to dashboard with an access denied message
       const redirectUrl = new URL('/dashboard', request.url);
       redirectUrl.searchParams.set('accessDenied', 'administrator');
@@ -77,6 +72,7 @@ export const config = {
     '/dashboard/:path*',
     '/todo-list-manager/:path*',
     '/administrator/:path*',
+    '/admin/:path*',
     // Home page also needs checking for session to update UI
     '/'
   ],

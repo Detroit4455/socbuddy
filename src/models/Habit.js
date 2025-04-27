@@ -22,6 +22,16 @@ const habitSchema = new mongoose.Schema({
     required: [true, 'Owner is required'],
     default: 'Anonymous User'
   },
+  templateId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'HabitTemplate',
+    default: null
+  },
+  category: {
+    type: String,
+    trim: true,
+    default: 'General'
+  },
   color: {
     type: String,
     default: '#09cbb1' // Default teal color
@@ -65,6 +75,43 @@ const habitSchema = new mongoose.Schema({
       }
     }
   ],
+  marathons: [
+    {
+      marathonId: {
+        type: mongoose.Schema.Types.ObjectId,
+        default: function() { return new mongoose.Types.ObjectId(); }
+      },
+      groupName: {
+        type: String,
+        trim: true,
+        default: ''
+      },
+    initiatedBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'User'
+    },
+    habitName: {
+      type: String,
+      trim: true
+    },
+    requested: [
+      {
+        to: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: 'User'
+        },
+        status: {
+          type: String,
+          enum: ['pending', 'accepted', 'rejected'],
+          default: 'pending'
+        },
+        startDate: {
+          type: String, // YYYY-MM-DD format
+        }
+      }
+    ]
+    }
+  ],
   createdAt: {
     type: Date,
     default: Date.now
@@ -85,6 +132,8 @@ habitSchema.pre('save', function(next) {
 // Index for faster queries
 habitSchema.index({ userId: 1 });
 habitSchema.index({ 'streakData.date': 1 });
+habitSchema.index({ 'marathons.requested.to': 1 });
+habitSchema.index({ 'marathons.initiatedBy': 1 });
 
 const Habit = mongoose.models.Habit || mongoose.model('Habit', habitSchema);
 

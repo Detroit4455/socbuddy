@@ -106,11 +106,18 @@ const Navbar = () => {
           </Link>
         </li>
         {session?.user?.role === 'admin' && (
-          <li>
-            <Link href="/administrator" className="hover:text-[rgba(9,203,177,0.823)] transition-colors">
-              Administrator
-            </Link>
-          </li>
+          <>
+            <li>
+              <Link href="/administrator" className="hover:text-[rgba(9,203,177,0.823)] transition-colors">
+                Administrator
+              </Link>
+            </li>
+            <li>
+              <Link href="/admin" className="hover:text-[rgba(9,203,177,0.823)] transition-colors">
+                Admin Panel
+              </Link>
+            </li>
+          </>
         )}
         
         {status === 'loading' ? (

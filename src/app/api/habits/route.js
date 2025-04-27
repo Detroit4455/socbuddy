@@ -77,6 +77,23 @@ export async function POST(req) {
     if (!data.currentStreak) data.currentStreak = 0;
     if (!data.longestStreak) data.longestStreak = 0;
 
+    // Check if habit was created from a template
+    if (data.templateId) {
+      try {
+        // Increment used_count in the habit_templates collection
+        const { db } = await connectToDatabase();
+        await db.collection('habit_templates').updateOne(
+          { _id: new ObjectId(data.templateId) },
+          { $inc: { used_count: 1 } }
+        );
+        
+        console.log(`Incremented used_count for template ${data.templateId}`);
+      } catch (templateError) {
+        console.error('Error updating template usage count:', templateError);
+        // Continue with habit creation even if template update fails
+      }
+    }
+
     const newHabit = new Habit(data);
     console.log('New habit before save:', newHabit);
     

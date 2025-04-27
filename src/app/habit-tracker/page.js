@@ -2,17 +2,22 @@
 
 import React, { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast, Toaster } from 'react-hot-toast';
 import AddHabitModal from '@/components/habits/AddHabitModal';
+import HabitTemplateSelector from '@/components/habits/HabitTemplateSelector';
 import ThemeToggle from '@/components/ThemeToggle';
+import HabitDetails from '@/components/HabitDetails';
 
 export default function HabitTracker() {
   const { data: session, status } = useSession();
+  const router = useRouter();
   const isSessionLoading = status === 'loading';
   const [habits, setHabits] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [showTemplatePicker, setShowTemplatePicker] = useState(false);
   const [stats, setStats] = useState(null);
   const [selectedHabit, setSelectedHabit] = useState(null);
   const [currentMonth, setCurrentMonth] = useState(new Date());
@@ -23,6 +28,10 @@ export default function HabitTracker() {
     currentMonth: [],
     nextMonth: []
   });
+  const [notifications, setNotifications] = useState([]);
+  const [showNotifications, setShowNotifications] = useState(false);
+  const [notifLoading, setNotifLoading] = useState(false);
+  const [showMobileModal, setShowMobileModal] = useState(false);
 
   useEffect(() => {
     if (session?.user) {
@@ -53,6 +62,30 @@ export default function HabitTracker() {
   useEffect(() => {
     localStorage.setItem('socbuddy-dark-mode', darkMode);
   }, [darkMode]);
+
+  // Fetch and set pending marathon invitations
+  const fetchNotifications = async () => {
+    if (!session?.user) return;
+    setNotifLoading(true);
+    try {
+      const res = await fetch('/api/habits/marathon?status=pending');
+      if (res.ok) {
+        const data = await res.json();
+        const pending = data.filter(inv => inv.status === 'pending');
+        setNotifications(pending);
+      } else {
+        console.error('Error fetching notifications:', res.statusText);
+      }
+    } catch (err) {
+      console.error('Error fetching notifications', err);
+    } finally {
+      setNotifLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchNotifications();
+  }, [session]);
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -121,6 +154,7 @@ export default function HabitTracker() {
       toast.success('Habit added successfully!');
       
       setIsAddModalOpen(false);
+      setShowTemplatePicker(false);
       setIsSubmitting(false);
       loadHabits();
       loadStats();
@@ -378,6 +412,32 @@ export default function HabitTracker() {
     return habit?.longestStreak || 0;
   };
 
+  // Handle Marathon button click: redirect based on invitation status
+  const handleMarathonClick = async () => {
+    try {
+      const res = await fetch('/api/habits/marathon');
+      if (!res.ok) throw new Error();
+      const data = await res.json();
+      const active = data.find(inv => inv.status === 'accepted' || inv.status === 'owner');
+      if (active) {
+        router.push(`/habit-marathon/chart?marathonId=${active.marathonId}`);
+      } else {
+        router.push('/habit-marathon');
+      }
+    } catch {
+      router.push('/habit-marathon');
+    }
+  };
+
+  // Toggle notification panel and clear notifications when read
+  const handleBellClick = () => {
+    setShowNotifications(prev => {
+      const newShow = !prev;
+      if (newShow) fetchNotifications();
+      return newShow;
+    });
+  };
+
   if (isSessionLoading) {
     return (
       <div className={`min-h-screen ${darkMode ? 'bg-[#1e1e1e]' : 'bg-white'} flex items-center justify-center`}>
@@ -430,20 +490,132 @@ export default function HabitTracker() {
       />
       
       {/* Header */}
-      <header className={`${darkMode ? 'bg-[#1e1e1e] border-[#333]' : 'bg-white border-gray-200'} border-b py-4 px-6`}>
-        <div className="max-w-7xl mx-auto flex justify-between items-center">
-          <div>
-            <h1 className={`text-2xl font-bold ${darkMode ? 'text-[rgba(9,203,177,0.823)]' : 'text-purple-500'}`}>Daily Horizon</h1>
-            <p className={darkMode ? 'text-[#888]' : 'text-gray-500'}>{formattedDate}</p>
-          </div>
-          <div className="flex items-center">
-            <ThemeToggle darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-            <nav className="ml-4">
-              <ul className="flex space-x-6">
-                <li><Link href="/" className={`${darkMode ? 'text-[#bbb] hover:text-[rgba(9,203,177,0.823)]' : 'text-gray-600 hover:text-gray-900 hover:underline'} transition-all`}>Home</Link></li>
-                <li><Link href="/habit-tracker/manage" className={`${darkMode ? 'text-[#bbb] hover:text-[rgba(9,203,177,0.823)]' : 'text-gray-600 hover:text-gray-900 hover:underline'} transition-all`}>Manage</Link></li>
-              </ul>
-            </nav>
+      <header className={`px-4 py-3 shadow-sm ${darkMode ? 'bg-[#1e1e1e] border-b border-[#333]' : 'bg-white border-b border-gray-200'}`}>
+        <div className="container mx-auto">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+            <div className="flex items-center justify-between w-full sm:w-auto space-x-1">
+              <h1 className="text-xl font-semibold">Habit Tracker</h1>
+              <div className="flex items-center sm:hidden space-x-1">
+                {/* Mobile-only Marathon button */}
+                <button
+                  onClick={handleMarathonClick}
+                  className="px-2 py-1 text-sm rounded-md bg-purple-50 hover:bg-purple-100 text-purple-600"
+                >
+                  <span className="inline-block animate-bounce">🏃‍➡️</span> Marathon
+                </button>
+                {/* Mobile-only theme toggle */}
+                <ThemeToggle darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+                {/* Mobile-only notification bell with dropdown */}
+                <div className="relative">
+                  <button onClick={handleBellClick} className="text-xl">
+                    🔔
+                    {notifications.length > 0 && (
+                      <span className="absolute -top-1 -right-2 h-4 w-4 bg-red-500 text-white text-xs font-semibold flex items-center justify-center rounded-full">
+                        {notifications.length}
+                      </span>
+                    )}
+                  </button>
+                  {showNotifications && (
+                    <div className="absolute mt-1 right-0 w-64 bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#444] rounded shadow-lg z-50">
+                      {notifLoading ? (
+                        <div className="flex items-center justify-center p-4">
+                          <svg className="animate-spin h-5 w-5 mr-2 text-gray-600 dark:text-gray-300" viewBox="0 0 24 24">
+                            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.372 0 0 5.372 0 12h4z" />
+                          </svg>
+                          Loading...
+              </div>
+                      ) : (
+                        <ul className="max-h-48 overflow-y-auto">
+                          {notifications.length > 0 ? (
+                            notifications.map(inv => (
+                              <li key={inv.marathonId}>
+                                <button
+                                  onClick={() => { router.push('/habit-marathon'); setShowNotifications(false); }}
+                                  className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-[#3a3a3a] text-gray-900 dark:text-gray-200"
+                                >
+                                  Invitation to join "{inv.name}" marathon
+                                </button>
+                              </li>
+                            ))
+                          ) : (
+                            <li className="px-4 py-2 text-center text-sm text-gray-900 dark:text-gray-200">
+                              No notifications
+                            </li>
+                          )}
+                        </ul>
+                      )}
+            </div>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="hidden sm:flex flex-wrap gap-2 items-center ml-auto justify-end w-full sm:w-auto">
+              {/* Notification bell */}
+              <div className="relative">
+                <button onClick={handleBellClick} className="relative text-xl">
+                  🔔
+                  {notifications.length > 0 && (
+                    <span className="absolute -top-1 -right-2 h-4 w-4 bg-red-500 text-white text-xs font-semibold flex items-center justify-center rounded-full">
+                      {notifications.length}
+                    </span>
+                  )}
+                </button>
+                {showNotifications && (
+                  <div className="absolute mt-1 right-0 w-64 bg-white dark:bg-[#2a2a2a] border border-gray-200 dark:border-[#444] rounded shadow-lg z-50">
+                    {notifLoading ? (
+                      <div className="flex items-center justify-center p-4">
+                        <svg className="animate-spin h-5 w-5 mr-2 text-gray-600 dark:text-gray-300" viewBox="0 0 24 24">
+                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.372 0 0 5.372 0 12h4z" />
+                        </svg>
+                        Loading...
+                      </div>
+                    ) : (
+                      <ul className="max-h-48 overflow-y-auto">
+                        {notifications.length > 0 ? notifications.map(inv => (
+                          <li key={inv.marathonId}>
+                            <button onClick={() => { router.push('/habit-marathon'); setShowNotifications(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-[#3a3a3a] text-gray-900 dark:text-gray-200">
+                              Invitation to join "{inv.name}" marathon
+                            </button>
+                          </li>
+                        )) : (
+                          <li className="px-4 py-2 text-center text-sm text-gray-900 dark:text-gray-200">No notifications</li>
+                        )}
+                      </ul>
+                    )}
+                  </div>
+                )}
+              </div>
+              {/* Theme toggle */}
+                <ThemeToggle darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+              </div>
+            <div className="flex flex-wrap gap-2 w-full sm:w-auto">
+              <Link 
+                href="/habit-tracker/stats" 
+                className={`px-3 py-1 text-sm rounded-md ${
+                  darkMode 
+                    ? 'bg-[rgba(9,203,177,0.1)] hover:bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)]'
+                    : 'bg-purple-50 hover:bg-purple-100 text-purple-600'
+                }`}
+              >
+                Stats
+              </Link>
+              <button
+                onClick={handleMarathonClick}
+                className={`hidden sm:inline-flex px-3 py-1 text-sm rounded-md ${
+                  darkMode 
+                    ? 'bg-[rgba(9,203,177,0.1)] hover:bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)]'
+                    : 'bg-purple-50 hover:bg-purple-100 text-purple-600'
+                }`}
+              >
+                <span className="inline-block animate-bounce">🏃‍➡️</span> Marathon
+              </button>
+            </div>
+            {/* Mobile-only greeting below capsules */}
+            <div className="flex w-full items-center justify-end sm:hidden">
+              <span className="text-sm font-medium">Hello, {session?.user?.username}</span>
+            </div>
           </div>
         </div>
       </header>
@@ -454,7 +626,9 @@ export default function HabitTracker() {
             {/* Sidebar */}
             <div className="w-full md:w-1/4">
               <div className={`${darkMode ? 'bg-[#2a2a2a] border border-[#444]' : 'bg-white'} rounded-lg p-6`}>
-                <h2 className={`text-xl font-semibold mb-6 ${darkMode ? 'text-white' : ''}`}>My Habits</h2>
+                <div className="flex items-center justify-between mb-6">
+                  <h2 className={`text-xl font-semibold ${darkMode ? 'text-white' : ''}`}>My Habits</h2>
+                </div>
                 
                 {loading ? (
                   <div className="flex justify-center py-12">
@@ -465,7 +639,7 @@ export default function HabitTracker() {
                     {habits.map(habit => (
                       <div 
                         key={habit._id}
-                        onClick={() => setSelectedHabit(habit)}
+                        onClick={() => { setSelectedHabit(habit); setShowMobileModal(true); }}
                         className={`p-3 rounded-lg cursor-pointer transition-all ${
                           selectedHabit && selectedHabit._id === habit._id
                             ? darkMode 
@@ -510,7 +684,7 @@ export default function HabitTracker() {
                   <div className="text-center py-8">
                     <p className={darkMode ? 'text-[#888] mb-4' : 'text-gray-500 mb-4'}>You haven't created any habits yet.</p>
                     <button
-                      onClick={() => setIsAddModalOpen(true)}
+                      onClick={() => setShowTemplatePicker(true)}
                       className={`${
                         darkMode 
                           ? 'bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)] hover:bg-[rgba(9,203,177,0.3)]' 
@@ -525,7 +699,7 @@ export default function HabitTracker() {
                 {habits.length > 0 && (
                   <div className="mt-6">
                     <button
-                      onClick={() => setIsAddModalOpen(true)}
+                      onClick={() => setShowTemplatePicker(true)}
                       className={`w-full ${
                         darkMode 
                           ? 'bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)] hover:bg-[rgba(9,203,177,0.3)]' 
@@ -541,394 +715,46 @@ export default function HabitTracker() {
             
             {/* Main Content */}
             {selectedHabit ? (
-              <div className="w-full md:w-3/4">
-                <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-                  {/* Left column - Habit details and insights */}
-                  <div className="lg:col-span-8">
-                    <div className={`${darkMode ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white border-gray-200'} rounded-lg shadow-sm border p-6 mb-6`}>
-                      <h2 className={`text-2xl font-semibold mb-2 ${darkMode ? 'text-white' : ''}`}>{selectedHabit.name}</h2>
-                      {selectedHabit.description && (
-                        <p className={`${darkMode ? 'text-[#bbb]' : 'text-gray-600'} mb-4`}>{selectedHabit.description}</p>
-                      )}
-                      
-                      {/* Progress Insights */}
-                      <div className="mt-4">
-                        <h3 className={`text-lg font-medium mb-3 ${darkMode ? 'text-white' : ''}`}>Progress Insights</h3>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          {/* Current Streak */}
-                          <div className={`text-center py-2 px-3 ${darkMode ? 'bg-[#333]' : 'bg-gray-50'} rounded-lg`}>
-                            <p className={darkMode ? 'text-[#888] text-sm mb-1' : 'text-gray-500 text-sm mb-1'}>Current Streak</p>
-                            <div className={`text-3xl font-bold ${darkMode ? 'text-[rgba(9,203,177,0.823)]' : 'text-purple-500'}`}>{selectedHabit.currentStreak > 0 ? selectedHabit.currentStreak : 1}</div>
-                            <p className={darkMode ? 'text-[#888] text-xs' : 'text-gray-500 text-xs'}>days</p>
-                          </div>
-                          
-                          {/* Completion Rate */}
-                          <div className={`text-center py-2 px-3 ${darkMode ? 'bg-[#333]' : 'bg-gray-50'} rounded-lg`}>
-                            <p className={darkMode ? 'text-[#888] text-sm mb-1' : 'text-gray-500 text-sm mb-1'}>Completion Rate</p>
-                            <div className="flex justify-center">
-                              <div className="relative h-16 w-16">
-                                <svg className="w-full h-full" viewBox="0 0 36 36">
-                                  <path
-                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                    fill="none"
-                                    stroke={darkMode ? "#555" : "#E5E7EB"}
-                                    strokeWidth="3"
-                                  />
-                                  <path
-                                    d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                    fill="none"
-                                    stroke={darkMode ? "rgba(9,203,177,0.823)" : "#A78BFA"}
-                                    strokeWidth="3"
-                                    strokeDasharray={`${getCompletionRate(selectedHabit)}, 100`}
-                                  />
-                                </svg>
-                                <div className={`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-sm font-semibold ${darkMode ? 'text-white' : ''}`}>
-                                  {getCompletionRate(selectedHabit)}%
+              // Desktop: show inline on md and up
+              <div className="hidden md:block md:w-3/4">
+                <HabitDetails
+                  selectedHabit={selectedHabit}
+                  darkMode={darkMode}
+                  currentMonth={currentMonth}
+                  calendarData={calendarData}
+                  handleTrackHabit={handleTrackHabit}
+                  isDateTodayOrYesterday={isDateTodayOrYesterday}
+                  prevMonth={prevMonth}
+                  nextMonth={nextMonth}
+                  formatMonthYear={formatMonthYear}
+                  formatMonthName={formatMonthName}
+                  getCompletionRate={getCompletionRate}
+                />
                                 </div>
-                              </div>
-                            </div>
-                            <p className={darkMode ? 'text-[#888] text-xs' : 'text-gray-500 text-xs'}>last 30 days</p>
-                          </div>
-                          
-                          {/* Best Streak */}
-                          <div className={`text-center py-2 px-3 ${darkMode ? 'bg-[#333]' : 'bg-gray-50'} rounded-lg`}>
-                            <p className={darkMode ? 'text-[#888] text-sm mb-1' : 'text-gray-500 text-sm mb-1'}>Best Streak</p>
-                            <div className={`text-3xl font-bold ${darkMode ? 'text-[rgba(9,203,177,0.823)]' : 'text-purple-500'}`}>{selectedHabit.longestStreak > 0 ? selectedHabit.longestStreak : 1}</div>
-                            <p className={darkMode ? 'text-[#888] text-xs' : 'text-gray-500 text-xs'}>days</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Calendar Section */}
-                    <div className={`${darkMode ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white border-gray-200'} rounded-lg shadow-sm border p-4 mb-4`}>
-                      <div className="flex justify-between items-center mb-3">
-                        <h3 className={`text-md font-medium ${darkMode ? 'text-white' : ''}`}>{formatMonthYear(currentMonth)}</h3>
-                        <div className="flex space-x-2">
-                          <button 
-                            onClick={prevMonth}
-                            className={`p-1 rounded-full ${darkMode ? 'hover:bg-[#333]' : 'hover:bg-gray-100'}`}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`w-4 h-4 ${darkMode ? 'text-[#bbb]' : ''}`}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
-                            </svg>
-                          </button>
-                          <button 
-                            onClick={nextMonth}
-                            className={`p-1 rounded-full ${darkMode ? 'hover:bg-[#333]' : 'hover:bg-gray-100'}`}
-                          >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className={`w-4 h-4 ${darkMode ? 'text-[#bbb]' : ''}`}>
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
-                            </svg>
-                          </button>
-                        </div>
-                      </div>
-                      
-                      <div className="grid grid-cols-3 gap-4">
-                        {/* Previous Month Calendar */}
-                        <div className={`transform transition-transform hover:scale-105 hover:shadow-md rounded-lg border ${darkMode ? 'border-[#444] bg-[#2a2a2a]' : 'border-gray-200 bg-white'} p-2 shadow-sm hover:shadow relative`}>
-                          <div className={`absolute inset-0 ${darkMode ? 'bg-[#333]' : 'bg-gray-100'} rounded-lg transform -z-10`} style={{ transform: 'translate(3px, 3px)' }}></div>
-                          <h4 className={`text-center font-medium ${darkMode ? 'text-[#bbb]' : 'text-gray-600'} mb-1 text-sm`}>
-                            {formatMonthName(new Date(calendarData.prevMonth.year, calendarData.prevMonth.month))}
-                          </h4>
-                          <div className="grid grid-cols-7 gap-1 text-xs">
-                            {/* Days of week headers */}
-                            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-                              <div key={index} className={`text-center py-1 text-xs font-medium ${darkMode ? 'text-[#666]' : 'text-gray-500'}`}>
-                                {day}
-                              </div>
-                            ))}
-                            
-                            {/* Calendar days */}
-                            {calendarData.prevMonth.days && calendarData.prevMonth.days.map((day, index) => {
-                              const isTrackable = isDateTodayOrYesterday(day.dateStr);
-                              
-                              return (
-                                <div 
-                                  key={index} 
-                                  className={`text-center py-1 relative ${
-                                    day.isCurrentMonth 
-                                      ? darkMode ? 'text-white' : 'text-gray-800' 
-                                      : darkMode ? 'text-[#555]' : 'text-gray-400'
-                                  }`}
-                                  onClick={() => isTrackable ? handleTrackHabit(
-                                    selectedHabit._id,
-                                    day.dateStr
                                   ) : null}
-                                >
-                                  <span className={`
-                                    h-5 w-5 flex items-center justify-center mx-auto rounded-full text-xs
-                                    ${day.completed ? (darkMode ? 'bg-[rgba(9,203,177,0.823)]' : 'bg-teal-500') + ' text-white' : darkMode ? 'hover:bg-[#333]' : 'hover:bg-gray-100'}
-                                    ${isTrackable ? 'cursor-pointer' : 'cursor-default opacity-70'}
-                                  `}>
-                                    {day.day}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                        
-                        {/* Current Month Calendar */}
-                        <div className={`transform transition-transform hover:scale-105 hover:shadow-md rounded-lg border ${darkMode ? 'border-[#444] bg-[#2a2a2a]' : 'border-gray-200 bg-white'} p-2 shadow-sm hover:shadow relative`}>
-                          <div className={`absolute inset-0 ${darkMode ? 'bg-[#333]' : 'bg-gray-100'} rounded-lg transform -z-10`} style={{ transform: 'translate(3px, 3px)' }}></div>
-                          <h4 className={`text-center font-medium ${darkMode ? 'text-[#bbb]' : 'text-gray-600'} mb-1 text-sm`}>
-                            {formatMonthName(new Date(calendarData.currentMonth.year, calendarData.currentMonth.month))}
-                          </h4>
-                          <div className="grid grid-cols-7 gap-1 text-xs">
-                            {/* Days of week headers */}
-                            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-                              <div key={index} className={`text-center py-1 text-xs font-medium ${darkMode ? 'text-[#666]' : 'text-gray-500'}`}>
-                                {day}
-                              </div>
-                            ))}
-                            
-                            {/* Calendar days */}
-                            {calendarData.currentMonth.days && calendarData.currentMonth.days.map((day, index) => {
-                              const isToday = day.year === today.getFullYear() && 
-                                             day.month === today.getMonth() && 
-                                             day.day === today.getDate();
-                              
-                              const isYesterday = (() => {
-                                const yesterday = new Date();
-                                yesterday.setDate(yesterday.getDate() - 1);
-                                return day.year === yesterday.getFullYear() && 
-                                       day.month === yesterday.getMonth() && 
-                                       day.day === yesterday.getDate();
-                              })();
-                              
-                              const isTrackable = isToday || isYesterday;
-                              
-                              return (
-                                <div 
-                                  key={index} 
-                                  className={`text-center py-1 relative ${
-                                    day.isCurrentMonth 
-                                      ? darkMode ? 'text-white' : 'text-gray-800' 
-                                      : darkMode ? 'text-[#555]' : 'text-gray-400'
-                                  } ${
-                                    isToday 
-                                      ? 'font-bold' 
-                                      : ''
-                                  }`}
-                                  onClick={() => isTrackable ? handleTrackHabit(
-                                    selectedHabit._id,
-                                    day.dateStr
-                                  ) : null}
-                                >
-                                  <span className={`
-                                    h-5 w-5 flex items-center justify-center mx-auto rounded-full text-xs
-                                    ${day.completed ? (darkMode ? 'bg-[rgba(9,203,177,0.823)]' : 'bg-teal-500') + ' text-white' : darkMode ? 'hover:bg-[#333]' : 'hover:bg-gray-100'}
-                                    ${isToday && !day.completed ? 'border border-purple-500' : ''}
-                                    ${isTrackable ? 'cursor-pointer' : 'cursor-default opacity-70'}
-                                  `}>
-                                    {day.day}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                        
-                        {/* Next Month Calendar */}
-                        <div className={`transform transition-transform hover:scale-105 hover:shadow-md rounded-lg border ${darkMode ? 'border-[#444] bg-[#2a2a2a]' : 'border-gray-200 bg-white'} p-2 shadow-sm hover:shadow relative`}>
-                          <div className={`absolute inset-0 ${darkMode ? 'bg-[#333]' : 'bg-gray-100'} rounded-lg transform -z-10`} style={{ transform: 'translate(3px, 3px)' }}></div>
-                          <h4 className={`text-center font-medium ${darkMode ? 'text-[#bbb]' : 'text-gray-600'} mb-1 text-sm`}>
-                            {formatMonthName(new Date(calendarData.nextMonth.year, calendarData.nextMonth.month))}
-                          </h4>
-                          <div className="grid grid-cols-7 gap-1 text-xs">
-                            {/* Days of week headers */}
-                            {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-                              <div key={index} className={`text-center py-1 text-xs font-medium ${darkMode ? 'text-[#666]' : 'text-gray-500'}`}>
-                                {day}
-                              </div>
-                            ))}
-                            
-                            {/* Calendar days */}
-                            {calendarData.nextMonth.days && calendarData.nextMonth.days.map((day, index) => {
-                              return (
-                                <div 
-                                  key={index} 
-                                  className={`text-center py-1 relative ${
-                                    day.isCurrentMonth 
-                                      ? darkMode ? 'text-white' : 'text-gray-800' 
-                                      : darkMode ? 'text-[#555]' : 'text-gray-400'
-                                  }`}
-                                >
-                                  <span className="h-5 w-5 flex items-center justify-center mx-auto rounded-full text-xs opacity-70">
-                                    {day.day}
-                                  </span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                    
-                    {/* Task Completion History */}
-                    <div className={`col-span-3 ${darkMode ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white border-gray-200'} rounded-lg shadow-sm border p-4 mb-4`}>
-                      <h3 className={`text-md font-medium mb-3 ${darkMode ? 'text-white' : ''}`}>Task Completion History</h3>
-                      
-                      <div className="h-60">
-                        {selectedHabit.streakData && selectedHabit.streakData.length > 0 ? (
-                          <div className="relative h-full">
-                            {/* X-axis */}
-                            <div className={`absolute bottom-0 left-0 right-0 h-px ${darkMode ? 'bg-[#444]' : 'bg-gray-200'}`}></div>
-                            
-                            {/* Y-axis */}
-                            <div className={`absolute top-0 bottom-0 left-0 w-px ${darkMode ? 'bg-[#444]' : 'bg-gray-200'}`}></div>
-                            
-                            {/* Generate line graph based on last 14 days data */}
-                            {(() => {
-                              // Get the last 14 days
-                              const dates = [];
-                              const today = new Date();
-                              
-                              for (let i = 13; i >= 0; i--) {
-                                const date = new Date(today);
-                                date.setDate(date.getDate() - i);
-                                const dateStr = date.toISOString().split('T')[0];
-                                dates.push(dateStr);
-                              }
-                              
-                              // Count completed tasks per day
-                              const completionData = dates.map(date => {
-                                const entry = selectedHabit.streakData.find(d => d.date === date);
-                                return {
-                                  date,
-                                  completed: entry?.completed ? 1 : 0,
-                                  displayDate: new Date(date).getDate()
-                                };
-                              });
-                              
-                              const maxValue = 1;
-                              const graphHeight = 200;
-                              
-                              return (
-                                <>
-                                  {/* Line graph */}
-                                  <svg className="w-full h-full" viewBox={`0 0 ${completionData.length * 30} ${graphHeight}`} preserveAspectRatio="none">
-                                    <path
-                                      d={`M ${completionData.map((point, index) => 
-                                        `${index * 30 + 15},${graphHeight - (point.completed * (graphHeight - 20))}`
-                                      ).join(' L ')}`}
-                                      fill="none"
-                                      stroke={darkMode ? "rgba(9,203,177,0.823)" : "#8b5cf6"}
-                                      strokeWidth="2"
-                                    />
-                                    
-                                    {/* Data points */}
-                                    {completionData.map((point, index) => (
-                                      <circle
-                                        key={index}
-                                        cx={index * 30 + 15}
-                                        cy={graphHeight - (point.completed * (graphHeight - 20))}
-                                        r="4"
-                                        fill={point.completed ? (darkMode ? "rgba(9,203,177,0.823)" : "#8b5cf6") : "#fff"}
-                                        stroke={darkMode ? "rgba(9,203,177,0.823)" : "#8b5cf6"}
-                                        strokeWidth="2"
-                                      />
-                                    ))}
-                                  </svg>
-                                  
-                                  {/* X-axis labels */}
-                                  <div className="flex justify-between mt-2 px-2">
-                                    {completionData.map((point, index) => (
-                                      <div key={index} className={`text-xs ${darkMode ? 'text-[#888]' : 'text-gray-500'}`}>
-                                        {point.displayDate}
-                                      </div>
-                                    ))}
-                                  </div>
-                                </>
-                              );
-                            })()}
-                          </div>
-                        ) : (
-                          <div className={`h-full flex items-center justify-center ${darkMode ? 'text-[#888]' : 'text-gray-500'}`}>
-                            No completion data available yet.
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  
-                  {/* Right column - Achievements */}
-                  <div className="lg:col-span-4">
-                    <div className={`${darkMode ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white border-gray-200'} rounded-lg shadow-sm border p-6 h-full`}>
-                      <h3 className={`text-lg font-medium mb-6 ${darkMode ? 'text-white' : ''}`}>Achievements</h3>
-                      
-                      <div className="space-y-4">
-                        {/* 3 Day Streak Achievement */}
-                        <div className={`p-4 rounded-lg ${
-                          selectedHabit.longestStreak >= 3 
-                            ? darkMode ? 'bg-[rgba(9,203,177,0.1)]' : 'bg-yellow-50' 
-                            : darkMode ? 'bg-[#333]' : 'bg-gray-50'
-                        }`}>
-                          <div className="flex items-center gap-3">
-                            <div className="text-2xl">🔥</div>
-                            <div>
-                              <h4 className={`font-medium ${darkMode ? 'text-white' : ''}`}>3 Day Streak</h4>
-                              <p className={`text-sm ${darkMode ? 'text-[#888]' : 'text-gray-500'}`}>
-                                {selectedHabit.longestStreak >= 3 ? 'Completed' : 'In Progress'}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {/* 7 Day Streak Achievement */}
-                        <div className={`p-4 rounded-lg ${
-                          selectedHabit.longestStreak >= 7 
-                            ? darkMode ? 'bg-[rgba(9,203,177,0.1)]' : 'bg-yellow-50' 
-                            : darkMode ? 'bg-[#333]' : 'bg-gray-50'
-                        }`}>
-                          <div className="flex items-center gap-3">
-                            <div className="text-2xl">🏆</div>
-                            <div>
-                              <h4 className={`font-medium ${darkMode ? 'text-white' : ''}`}>7 Day Streak</h4>
-                              <p className={`text-sm ${darkMode ? 'text-[#888]' : 'text-gray-500'}`}>
-                                {selectedHabit.longestStreak >= 7 ? 'Completed' : 'In Progress'}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        {/* Monthly Master Achievement */}
-                        <div className={`p-4 rounded-lg ${
-                          selectedHabit.longestStreak >= 30 
-                            ? darkMode ? 'bg-[rgba(9,203,177,0.1)]' : 'bg-yellow-50' 
-                            : darkMode ? 'bg-[#333]' : 'bg-gray-50'
-                        }`}>
-                          <div className="flex items-center gap-3">
-                            <div className="text-2xl">⭐</div>
-                            <div>
-                              <h4 className={`font-medium ${darkMode ? 'text-white' : ''}`}>Monthly Master</h4>
-                              <p className={`text-sm ${darkMode ? 'text-[#888]' : 'text-gray-500'}`}>
-                                {selectedHabit.longestStreak >= 30 ? 'Completed' : 'In Progress'}
-                              </p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className={`w-full md:w-3/4 flex items-center justify-center ${darkMode ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white border-gray-200'} rounded-lg shadow-sm border p-6`}>
-                <div className="text-center py-12">
-                  <p className={darkMode ? 'text-[#888] mb-4' : 'text-gray-500 mb-4'}>Select a habit from the list or create a new one to get started.</p>
+            {/* Mobile: modal popup for main content using HabitDetails */}
+            {showMobileModal && selectedHabit && (
+              <div className="fixed inset-0 z-50 flex items-start justify-center bg-black bg-opacity-40 md:hidden">
+                <div className="relative w-full h-full overflow-auto p-4">
                   <button
-                    onClick={() => setIsAddModalOpen(true)}
-                    className={`${
-                      darkMode 
-                        ? 'bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)] hover:bg-[rgba(9,203,177,0.3)]' 
-                        : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
-                    } px-4 py-2 rounded-lg transition-all duration-300`}
-                  >
-                    Create New Habit
-                  </button>
+                    onClick={() => setShowMobileModal(false)}
+                    className="absolute top-2 right-2 text-2xl text-white"
+                  >×</button>
+                  <div className={`${darkMode ? 'bg-[#2a2a2a]' : 'bg-white'} rounded-lg shadow-lg border p-4 mx-auto w-full max-w-md mt-12 mb-12`}> 
+                    <HabitDetails
+                      selectedHabit={selectedHabit}
+                      darkMode={darkMode}
+                      currentMonth={currentMonth}
+                      calendarData={calendarData}
+                      handleTrackHabit={handleTrackHabit}
+                      isDateTodayOrYesterday={isDateTodayOrYesterday}
+                      prevMonth={prevMonth}
+                      nextMonth={nextMonth}
+                      formatMonthYear={formatMonthYear}
+                      formatMonthName={formatMonthName}
+                      getCompletionRate={getCompletionRate}
+                    />
+                                      </div>
                 </div>
               </div>
             )}
@@ -943,8 +769,17 @@ export default function HabitTracker() {
       
       {/* Add Habit Modal */}
       {isAddModalOpen && (
-        <AddHabitModal 
+        <AddHabitModal
           onClose={() => setIsAddModalOpen(false)}
+          onSave={handleAddHabit}
+          isLoading={isSubmitting}
+          darkMode={darkMode}
+        />
+      )}
+      
+      {showTemplatePicker && (
+        <HabitTemplateSelector
+          onClose={() => setShowTemplatePicker(false)}
           onSave={handleAddHabit}
           isLoading={isSubmitting}
           darkMode={darkMode}

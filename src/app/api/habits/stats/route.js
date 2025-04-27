@@ -1,3 +1,6 @@
+// Mark this route as dynamic
+export const dynamic = 'force-dynamic';
+
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "../../auth/[...nextauth]/route";
 import { connectToDatabase } from "@/lib/mongodb";

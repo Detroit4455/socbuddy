@@ -92,7 +92,7 @@ export default function HabitStreakView({ habit, onTrack, onDelete }) {
   
   return (
     <div className="bg-[#2a2a2a] rounded-xl overflow-hidden border border-[#444]">
-      <div className="px-6 py-4 flex justify-between items-center">
+      <div className="px-4 sm:px-6 py-4 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div className="flex items-center">
           <div 
             className="w-10 h-10 flex items-center justify-center rounded-full mr-4 text-xl"
@@ -108,43 +108,47 @@ export default function HabitStreakView({ habit, onTrack, onDelete }) {
           </div>
         </div>
         
-        <div className="flex items-center space-x-4">
-          <div className="flex flex-col items-center">
-            <span className="text-[#666] text-xs">Current</span>
-            <span className="text-2xl font-bold" style={{ color: habit.color }}>
-              {habit.currentStreak || 0}
-            </span>
+        <div className="flex items-center gap-4 self-end sm:self-auto">
+          <div className="flex gap-4">
+            <div className="flex flex-col items-center">
+              <span className="text-[#666] text-xs">Current</span>
+              <span className="text-2xl font-bold" style={{ color: habit.color }}>
+                {habit.currentStreak || 0}
+              </span>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="text-[#666] text-xs">Longest</span>
+              <span className="text-2xl font-bold text-white">
+                {habit.longestStreak || 0}
+              </span>
+            </div>
           </div>
-          <div className="flex flex-col items-center">
-            <span className="text-[#666] text-xs">Longest</span>
-            <span className="text-2xl font-bold text-white">
-              {habit.longestStreak || 0}
-            </span>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setShowCalendar(!showCalendar)}
+              className="p-2 rounded-lg bg-[#333] hover:bg-[#444] transition-colors text-white"
+              title="View Calendar"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
+              </svg>
+            </button>
+            <button
+              onClick={() => setIsConfirmingDelete(!isConfirmingDelete)}
+              className="p-2 rounded-lg bg-[#333] hover:bg-red-900 transition-colors text-white"
+              title="Delete Habit"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
+              </svg>
+            </button>
           </div>
-          <button
-            onClick={() => setShowCalendar(!showCalendar)}
-            className="ml-4 p-2 rounded-lg bg-[#333] hover:bg-[#444] transition-colors text-white"
-            title="View Calendar"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clipRule="evenodd" />
-            </svg>
-          </button>
-          <button
-            onClick={() => setIsConfirmingDelete(!isConfirmingDelete)}
-            className="p-2 rounded-lg bg-[#333] hover:bg-red-900 transition-colors text-white"
-            title="Delete Habit"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M9 2a1 1 0 00-.894.553L7.382 4H4a1 1 0 000 2v10a2 2 0 002 2h8a2 2 0 002-2V6a1 1 0 100-2h-3.382l-.724-1.447A1 1 0 0011 2H9zM7 8a1 1 0 012 0v6a1 1 0 11-2 0V8zm5-1a1 1 0 00-1 1v6a1 1 0 102 0V8a1 1 0 00-1-1z" clipRule="evenodd" />
-            </svg>
-          </button>
         </div>
       </div>
       
       {/* Confirmation dialog for deleting */}
       {isConfirmingDelete && (
-        <div className="px-6 py-4 bg-red-900 bg-opacity-20 border-t border-red-800">
+        <div className="px-4 sm:px-6 py-4 bg-red-900 bg-opacity-20 border-t border-red-800">
           <p className="text-white mb-3">Are you sure you want to delete this habit? This action cannot be undone.</p>
           <div className="flex justify-end space-x-3">
             <button
@@ -164,8 +168,8 @@ export default function HabitStreakView({ habit, onTrack, onDelete }) {
       )}
       
       {/* Quick streak view - last 7 days */}
-      <div className="px-6 py-3 bg-[#222] border-t border-[#444]">
-        <div className="flex justify-between">
+      <div className="px-3 sm:px-6 py-3 bg-[#222] border-t border-[#444] overflow-x-auto">
+        <div className="flex justify-between min-w-[300px]">
           {last7Days.map((day, index) => {
             const isTrackable = isDateTodayOrYesterday(day.date);
             return (
@@ -176,7 +180,7 @@ export default function HabitStreakView({ habit, onTrack, onDelete }) {
             >
               <span className="text-xs text-[#666] mb-1">{day.day}</span>
               <div 
-                className={`w-8 h-8 rounded-full flex items-center justify-center ${
+                className={`w-6 h-6 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${
                   day.isCompleted 
                     ? 'bg-opacity-20 border-2' 
                     : 'bg-[#333] border border-[#555]'
@@ -187,7 +191,7 @@ export default function HabitStreakView({ habit, onTrack, onDelete }) {
                 }}
               >
                 {day.isCompleted && (
-                  <span style={{ color: habit.color }}>{habit.icon}</span>
+                  <span style={{ color: habit.color }} className="text-sm sm:text-base">{habit.icon}</span>
                 )}
               </div>
             </div>
@@ -196,45 +200,41 @@ export default function HabitStreakView({ habit, onTrack, onDelete }) {
       </div>
       
       {/* Today's tracking */}
-      <div className="px-6 py-4 bg-[#1e1e1e] border-t border-[#444]">
-        <div className="flex items-center justify-between">
+      <div className="px-4 sm:px-6 py-4 bg-[#1e1e1e] border-t border-[#444]">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
           <div>
-            <h4 className="text-[#bbb] font-medium">Today</h4>
-            {!isEditMode ? (
-              <p className="text-white mt-1">
-                {todayNote || "No notes for today"}
-              </p>
-            ) : (
-              <div className="mt-2">
+            <h3 className="text-lg font-medium text-white mb-1">Today's Progress</h3>
+            {isEditMode ? (
+              <div className="flex flex-col">
                 <textarea
                   value={note}
                   onChange={(e) => setNote(e.target.value)}
                   placeholder="Add notes for today..."
-                  className="w-full bg-[#2a2a2a] rounded border border-[#444] p-2 text-white"
-                  rows="2"
+                  className="mb-2 p-2 rounded-lg bg-[#333] border border-[#444] text-white w-full sm:w-64 h-20"
                 />
-                <div className="flex space-x-2 mt-2">
+                <div className="flex space-x-2">
                   <button
                     onClick={handleSaveNote}
                     className="px-3 py-1 rounded-lg bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)] hover:bg-[rgba(9,203,177,0.3)]"
                   >
-                    Save Note
+                    Save
                   </button>
                   <button
-                    onClick={() => {
-                      setIsEditMode(false);
-                      setNote(todayNote);
-                    }}
+                    onClick={() => setIsEditMode(false)}
                     className="px-3 py-1 rounded-lg bg-[#333] text-white hover:bg-[#444]"
                   >
                     Cancel
                   </button>
                 </div>
               </div>
+            ) : (
+              <p className="text-[#bbb] text-sm">
+                {todayNote || "No notes for today"}
+              </p>
             )}
           </div>
           
-          <div className="flex items-center">
+          <div className="flex items-center gap-2 self-end sm:self-auto">
             {!isEditMode && (
               <button
                 onClick={() => {
