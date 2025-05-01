@@ -6,6 +6,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import ThemeToggle from '@/components/ThemeToggle';
+import { HomeIcon } from '@heroicons/react/solid';
 
 function MarathonChartContent() {
   const searchParams = useSearchParams();
@@ -114,6 +115,9 @@ function MarathonChartContent() {
     <div className="min-h-screen bg-gradient-to-br from-purple-700 to-pink-500 text-white py-8 px-4 sm:px-0">
       {/* Top navigation bar */}
       <nav className="w-full mb-4 sm:mb-6 flex items-center justify-between px-2 sm:px-6">
+        <Link href="/habit-tracker" className="text-white hover:text-gray-300">
+          <HomeIcon className="h-6 w-6 inline-block" />
+        </Link>
         <span className="text-xs sm:text-sm font-medium">
           Hello, {session?.user?.username}
         </span>

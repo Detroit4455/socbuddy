@@ -1,10 +1,10 @@
 import React from 'react';
 
-export default function HabitStatsDetail({ habits }) {
+export default function HabitStatsDetail({ habits, darkMode }) {
   if (!habits || habits.length === 0) {
     return (
-      <div className="text-center py-12 bg-[#2a2a2a] rounded-lg">
-        <p className="text-[#bbb] mb-4">No habits found to display statistics.</p>
+      <div className={`text-center py-12 ${darkMode ? 'bg-[#2a2a2a]' : 'bg-white'} rounded-lg`}>
+        <p className={`${darkMode ? 'text-[#bbb]' : 'text-gray-500'} mb-4`}>No habits found to display statistics.</p>
       </div>
     );
   }
@@ -36,57 +36,58 @@ export default function HabitStatsDetail({ habits }) {
   
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-semibold text-white">Habit Performance</h2>
+      <h2 className={`text-xl font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>Habit Performance</h2>
       
       <div className="space-y-4">
         {habitStats.map(stat => (
-          <div key={stat.id} className="bg-[#2a2a2a] p-4 rounded-xl border border-[#444]">
+          <div key={stat.id} className={`p-4 rounded-xl border ${darkMode ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white border-gray-200'}`}>
             <div className="flex items-center mb-3">
               <span 
-                className="text-xl flex items-center justify-center w-8 h-8 rounded-full mr-3"
-                style={{ background: stat.color + '30' }}
+                className={`text-xl flex items-center justify-center w-8 h-8 rounded-full mr-3 ${darkMode ? '' : 'bg-gray-100'}`}
+                style={{ background: stat.color + '30', color: stat.color }}
               >
                 {stat.icon}
               </span>
-              <h3 className="text-lg font-semibold text-white">{stat.name}</h3>
+              <h3 className={`text-lg font-semibold ${darkMode ? 'text-white' : 'text-gray-800'}`}>{stat.name}</h3>
             </div>
             
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <p className="text-[#666] text-xs mb-1">Completion Rate</p>
+                <p className={`${darkMode ? 'text-[#888]' : 'text-gray-500'} text-xs mb-1`}>Completion Rate</p>
                 <div className="relative pt-1">
                   <div className="flex mb-1 items-center justify-between">
                     <div className="text-right">
-                      <span className="text-sm font-semibold inline-block text-white">
+                      <span className={`text-sm font-semibold inline-block ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                         {stat.completionRate}%
                       </span>
                     </div>
                   </div>
-                  <div className="overflow-hidden h-2 text-xs flex rounded bg-[#333]">
+                  <div className={`overflow-hidden h-2 text-xs flex rounded ${darkMode ? 'bg-[#333]' : 'bg-gray-100'}`}>
                     <div 
                       style={{ width: `${stat.completionRate}%`, backgroundColor: stat.color }}
                       className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center"
                     ></div>
                   </div>
                 </div>
-                <p className="text-xs text-[#666] mt-1">
+                <p className={`${darkMode ? 'text-[#888]' : 'text-gray-500'} text-xs mt-1`}
+                >
                   {stat.completedCount} of {stat.totalCount} days
                 </p>
               </div>
               
               <div>
-                <p className="text-[#666] text-xs mb-1">Current Streak</p>
+                <p className={`${darkMode ? 'text-[#888]' : 'text-gray-500'} text-xs mb-1`}>Current Streak</p>
                 <p className="text-2xl font-bold" style={{ color: stat.color }}>
                   {stat.currentStreak}
-                  <span className="text-sm text-[#666] ml-1">days</span>
+                  <span className={`${darkMode ? 'text-[#888]' : 'text-gray-500'} text-sm ml-1`}>days</span>
                 </p>
               </div>
               
               <div>
-                <p className="text-[#666] text-xs mb-1">Longest Streak</p>
-                <p className="text-2xl font-bold text-white">
+                <p className={`${darkMode ? 'text-[#888]' : 'text-gray-500'} text-xs mb-1`}>Longest Streak</p>
+                <p className={`text-2xl font-bold ${darkMode ? 'text-white' : 'text-gray-800'}`}>
                   {stat.longestStreak}
-                  <span className="text-sm text-[#666] ml-1">days</span>
+                  <span className={`${darkMode ? 'text-[#888]' : 'text-gray-500'} text-sm ml-1`}>days</span>
                 </p>
               </div>
             </div>

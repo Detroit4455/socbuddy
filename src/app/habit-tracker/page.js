@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast, Toaster } from 'react-hot-toast';
@@ -32,6 +32,7 @@ export default function HabitTracker() {
   const [showNotifications, setShowNotifications] = useState(false);
   const [notifLoading, setNotifLoading] = useState(false);
   const [showMobileModal, setShowMobileModal] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   useEffect(() => {
     if (session?.user) {
@@ -47,8 +48,15 @@ export default function HabitTracker() {
   }, [session]);
 
   useEffect(() => {
-    if (habits.length > 0 && !selectedHabit) {
+    if (habits.length > 0) {
+      if (!selectedHabit) {
       setSelectedHabit(habits[0]);
+      } else {
+        const updated = habits.find(h => h._id === selectedHabit._id);
+        if (updated) {
+          setSelectedHabit(updated);
+        }
+      }
     }
   }, [habits]);
 
@@ -438,6 +446,12 @@ export default function HabitTracker() {
     });
   };
 
+  const handleSignOut = async () => {
+    await signOut({ redirect: false });
+    router.push('/auth/signin');
+    setIsProfileOpen(false);
+  };
+
   if (isSessionLoading) {
     return (
       <div className={`min-h-screen ${darkMode ? 'bg-[#1e1e1e]' : 'bg-white'} flex items-center justify-center`}>
@@ -503,6 +517,13 @@ export default function HabitTracker() {
                 >
                   <span className="inline-block animate-bounce">🏃‍➡️</span> Marathon
                 </button>
+                {/* Mobile-only Stats link - moved directly after Marathon */}
+                <Link
+                  href="/habit-tracker/stats"
+                  className="px-2 py-1 text-sm rounded-md bg-purple-100 hover:bg-purple-200 text-purple-600"
+                >
+                  Stats
+                </Link>
                 {/* Mobile-only theme toggle */}
                 <ThemeToggle darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
                 {/* Mobile-only notification bell with dropdown */}
@@ -551,6 +572,24 @@ export default function HabitTracker() {
               </div>
             </div>
             <div className="hidden sm:flex flex-wrap gap-2 items-center ml-auto justify-end w-full sm:w-auto">
+              {/* Profile dropdown */}
+              <div className="relative">
+                <button
+                  onClick={() => setIsProfileOpen(prev => !prev)}
+                  className={`flex items-center space-x-1 px-2 py-1 rounded-md ${darkMode ? 'hover:bg-[#444]' : 'hover:bg-[#eee]'}`}
+                >
+                  <span className={`${darkMode ? 'text-white' : 'text-gray-800'}`}>{session.user.username}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" className={`${darkMode ? 'text-white h-4 w-4' : 'text-gray-600 h-4 w-4'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                  </svg>
+                </button>
+                {isProfileOpen && (
+                  <div className={`absolute right-0 mt-2 w-48 rounded shadow-lg z-50 ${darkMode ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white border-gray-200'}`}>  
+                    <Link href="/profile" className={`block px-4 py-2 text-sm ${darkMode ? 'text-[#e0e0e0]' : 'text-gray-800'} hover:${darkMode ? 'bg-[#333]' : 'bg-gray-100'}`}>Profile</Link>
+                    <button onClick={handleSignOut} className={`block w-full text-left px-4 py-2 text-sm ${darkMode ? 'text-[#e0e0e0]' : 'text-gray-800'} hover:${darkMode ? 'bg-[#333]' : 'bg-gray-100'}`}>Sign Out</button>
+                  </div>
+                )}
+              </div>
               {/* Notification bell */}
               <div className="relative">
                 <button onClick={handleBellClick} className="relative text-xl">
@@ -592,14 +631,14 @@ export default function HabitTracker() {
               </div>
             <div className="flex flex-wrap gap-2 w-full sm:w-auto">
               <Link 
-                href="/habit-tracker/stats" 
-                className={`px-3 py-1 text-sm rounded-md ${
+                href="/habit-tracker/manage" 
+                className={`hidden sm:inline-flex px-3 py-1 text-sm rounded-md ${
                   darkMode 
                     ? 'bg-[rgba(9,203,177,0.1)] hover:bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)]'
                     : 'bg-purple-50 hover:bg-purple-100 text-purple-600'
                 }`}
               >
-                Stats
+                Manage
               </Link>
               <button
                 onClick={handleMarathonClick}
@@ -628,6 +667,12 @@ export default function HabitTracker() {
               <div className={`${darkMode ? 'bg-[#2a2a2a] border border-[#444]' : 'bg-white'} rounded-lg p-6`}>
                 <div className="flex items-center justify-between mb-6">
                   <h2 className={`text-xl font-semibold ${darkMode ? 'text-white' : ''}`}>My Habits</h2>
+                  <Link
+                    href="/habit-tracker/manage"
+                    className={`text-sm px-2 py-1 rounded ${darkMode ? 'bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)] hover:bg-[rgba(9,203,177,0.3)]' : 'bg-purple-50 text-purple-600 hover:bg-purple-100'} md:hidden`}
+                  >
+                    Manage
+                  </Link>
                 </div>
                 
                 {loading ? (

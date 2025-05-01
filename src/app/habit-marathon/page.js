@@ -1,13 +1,17 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useSession } from 'next-auth/react';
+import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { toast, Toaster } from 'react-hot-toast';
 import ThemeToggle from '@/components/ThemeToggle';
+import { HomeIcon } from '@heroicons/react/solid';
 
 export default function HabitMarathon() {
   const { data: session, status } = useSession();
+  const router = useRouter();
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [darkMode, setDarkMode] = useState(false);
   const [habits, setHabits] = useState([]);
   const [users, setUsers] = useState([]);
@@ -31,6 +35,12 @@ export default function HabitMarathon() {
   // Active tab participants cache
   const [activeParticipants, setActiveParticipants] = useState({});
   const [activeLoading, setActiveLoading] = useState({});
+
+  const handleSignOut = async () => {
+    await signOut({ redirect: false });
+    router.push('/auth/signin');
+    setIsProfileOpen(false);
+  };
 
   useEffect(() => {
     if (session?.user) {
@@ -403,16 +413,32 @@ export default function HabitMarathon() {
             <h1 className={`text-xl font-semibold ${darkMode ? 'text-white' : ''}`}>Habit Marathon</h1>
             <p className={`text-sm ${darkMode ? 'text-[#bbb]' : 'text-gray-600'}`}>{formattedDate}</p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="hidden sm:flex items-center gap-4">
+            {/* Profile dropdown */}
+            <div className="relative">
+              <button
+                onClick={() => setIsProfileOpen(prev => !prev)}
+                className={`flex items-center space-x-1 px-2 py-1 rounded-md ${darkMode ? 'hover:bg-[#444]' : 'hover:bg-gray-100'}`}
+              >
+                <span className={`${darkMode ? 'text-white' : 'text-gray-800'}`}>{session.user.username}</span>
+                <svg xmlns="http://www.w3.org/2000/svg" className={`${darkMode ? 'text-white h-4 w-4' : 'text-gray-600 h-4 w-4'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+              {isProfileOpen && (
+                <div className={`absolute right-0 mt-2 w-48 rounded shadow-lg z-50 ${darkMode ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white border-gray-200'}`}>  
+                  <Link href="/profile" className={`block px-4 py-2 text-sm ${darkMode ? 'text-[#e0e0e0] hover:bg-[#444]' : 'text-gray-800 hover:bg-gray-100'}`}>Profile</Link>
+                  <button onClick={handleSignOut} className={`block w-full text-left px-4 py-2 text-sm ${darkMode ? 'text-[#e0e0e0] hover:bg-[#444]' : 'text-gray-800 hover:bg-gray-100'}`}>Sign Out</button>
+                </div>
+              )}
+            </div>
             <ThemeToggle darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
             <Link
               href="/habit-tracker"
               className={`${darkMode ? 'text-[rgba(9,203,177,0.823)]' : 'text-purple-600'} text-sm font-medium flex items-center`}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-              </svg>
-              Back to Tracker
+              <HomeIcon className="h-4 w-4 mr-1" />
+              Home
             </Link>
           </div>
         </div>
