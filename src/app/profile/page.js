@@ -76,14 +76,6 @@ export default function Profile() {
                   </div>
                 </div>
               </div>
-              
-              <div className="flex justify-center">
-                <button
-                  className="px-4 py-2 bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)] rounded-md hover:bg-[rgba(9,203,177,0.3)] transition-colors"
-                >
-                  Edit Profile (Coming Soon)
-                </button>
-              </div>
             </div>
           </div>
         </div>
