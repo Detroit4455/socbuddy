@@ -131,6 +131,44 @@ export async function POST(req) {
     // Update longest streak if current streak is longer
     const longestStreak = Math.max(habit.longestStreak || 0, currentStreak);
     
+    // Check and award achievements
+    const achievements = habit.achievements || [];
+    const newAchievements = [];
+    
+    // 7-Day Streak Achievement
+    if (currentStreak >= 7 && !achievements.includes('7-Day Streak')) {
+      newAchievements.push('7-Day Streak');
+    }
+    
+    // 15-Day Streak Achievement
+    if (currentStreak >= 15 && !achievements.includes('15-Day Streak')) {
+      newAchievements.push('15-Day Streak');
+    }
+    
+    // 30-Day Warrior Achievement
+    if (currentStreak >= 30 && !achievements.includes('30-Day Warrior')) {
+      newAchievements.push('30-Day Warrior');
+    }
+    
+    // 100-Day Legend Achievement
+    if (currentStreak >= 100 && !achievements.includes('100-Day Legend')) {
+      newAchievements.push('100-Day Legend');
+    }
+    
+    // Comeback Kid Achievement
+    if (currentStreak >= 1 && !achievements.includes('Comeback Kid')) {
+      // Check if there was a break of 3+ days before this streak
+      const lastBreak = streakData.findIndex(entry => !entry.completed);
+      if (lastBreak > 0) {
+        const breakDate = new Date(streakData[lastBreak].date);
+        const streakStartDate = new Date(streakData[0].date);
+        const breakDuration = Math.ceil((breakDate - streakStartDate) / (1000 * 60 * 60 * 24));
+        if (breakDuration >= 3) {
+          newAchievements.push('Comeback Kid');
+        }
+      }
+    }
+    
     // Update the habit
     await db.collection("habits").updateOne(
       { _id: new ObjectId(habitId) },
@@ -140,7 +178,10 @@ export async function POST(req) {
           currentStreak,
           longestStreak,
           updatedAt: new Date()
-        } 
+        },
+        $push: {
+          achievements: { $each: newAchievements }
+        }
       }
     );
     
@@ -149,7 +190,8 @@ export async function POST(req) {
         success: true,
         message: "Habit tracked successfully",
         currentStreak,
-        longestStreak
+        longestStreak,
+        newAchievements
       }),
       {
         status: 200,

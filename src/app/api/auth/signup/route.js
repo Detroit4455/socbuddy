@@ -1,5 +1,6 @@
 const { NextResponse } = require('next/server');
 const User = require('@/models/User');
+const Habit = require('@/models/Habit');
 const { connectDB } = require('@/lib/mongodb');
 
 // Helper function to validate email format
@@ -68,6 +69,20 @@ export async function POST(request) {
       username,
       email,
       password
+    });
+
+    // Create default "Drink Water" habit for the new user
+    const defaultHabit = await Habit.create({
+      name: "Drink Water",
+      description: "Stay hydrated by drinking water regularly throughout the day",
+      userId: newUser._id,
+      owner: username,
+      category: "Health",
+      color: "#09cbb1",
+      icon: "💧",
+      frequency: "daily",
+      targetDaysPerWeek: 7,
+      streakData: []
     });
     
     // Return the created user without password

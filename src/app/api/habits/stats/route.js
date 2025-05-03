@@ -68,13 +68,26 @@ export async function GET(req) {
       }
     });
     
+    // Get achievements across all habits
+    const achievements = habits.reduce((acc, habit) => {
+      if (habit.achievements && habit.achievements.length > 0) {
+        habit.achievements.forEach(achievement => {
+          if (!acc.includes(achievement)) {
+            acc.push(achievement);
+          }
+        });
+      }
+      return acc;
+    }, []);
+    
     return new Response(
       JSON.stringify({
         totalHabits,
         completionRate,
         longestStreak,
         habitsByFrequency,
-        currentStreaks
+        currentStreaks,
+        achievements
       }),
       {
         status: 200,

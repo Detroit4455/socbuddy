@@ -51,6 +51,10 @@ const habitSchema = new mongoose.Schema({
     max: 7,
     default: 7
   },
+  achievements: {
+    type: [String],
+    default: []
+  },
   currentStreak: {
     type: Number,
     default: 0

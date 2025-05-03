@@ -9,6 +9,15 @@ export default function HabitStatsDetail({ habits, darkMode }) {
     );
   }
   
+  // Define achievement thresholds and colors
+  const achievementConfig = {
+    '7-Day Streak': { threshold: 7, color: '#4CAF50' },
+    '15-Day Streak': { threshold: 15, color: '#2196F3' },
+    '30-Day Warrior': { threshold: 30, color: '#9C27B0' },
+    '100-Day Legend': { threshold: 100, color: '#FF9800' },
+    'Comeback Kid': { threshold: 1, color: '#E91E63' }
+  };
+  
   // Calculate completion rates for each habit
   const habitStats = habits.map(habit => {
     const entries = habit.streakData || [];
@@ -17,6 +26,31 @@ export default function HabitStatsDetail({ habits, darkMode }) {
     const completionRate = totalEntries > 0 
       ? Math.round((completedEntries / totalEntries) * 100) 
       : 0;
+      
+    // Calculate in-progress achievements
+    const currentStreak = habit.currentStreak || 0;
+    const inProgressAchievements = Object.entries(achievementConfig)
+      .filter(([name, config]) => {
+        // Skip if already achieved
+        if (habit.achievements?.includes(name)) return false;
+        // For Comeback Kid, check if there was a break of 3+ days
+        if (name === 'Comeback Kid') {
+          const lastBreak = entries.findIndex(entry => !entry.completed);
+          if (lastBreak > 0) {
+            const breakDate = new Date(entries[lastBreak].date);
+            const streakStartDate = new Date(entries[0].date);
+            const breakDuration = Math.ceil((breakDate - streakStartDate) / (1000 * 60 * 60 * 24));
+            return breakDuration >= 3;
+          }
+          return false;
+        }
+        return currentStreak > 0 && currentStreak < config.threshold;
+      })
+      .map(([name, config]) => ({
+        name,
+        progress: Math.min(Math.round((currentStreak / config.threshold) * 100), 100),
+        color: config.color
+      }));
       
     return {
       id: habit._id,
@@ -27,12 +61,26 @@ export default function HabitStatsDetail({ habits, darkMode }) {
       completedCount: completedEntries,
       totalCount: totalEntries,
       currentStreak: habit.currentStreak,
-      longestStreak: habit.longestStreak
+      longestStreak: habit.longestStreak,
+      achievements: habit.achievements || [],
+      inProgressAchievements
     };
   });
   
   // Sort by completion rate descending
   habitStats.sort((a, b) => b.completionRate - a.completionRate);
+  
+  // Get all unique achievements across habits
+  const allAchievements = habits.reduce((acc, habit) => {
+    if (habit.achievements && habit.achievements.length > 0) {
+      habit.achievements.forEach(achievement => {
+        if (!acc.includes(achievement)) {
+          acc.push(achievement);
+        }
+      });
+    }
+    return acc;
+  }, []);
   
   return (
     <div className="space-y-6">
@@ -91,9 +139,87 @@ export default function HabitStatsDetail({ habits, darkMode }) {
                 </p>
               </div>
             </div>
+            
+            {/* Achievements Section */}
+            {(stat.achievements.length > 0 || stat.inProgressAchievements.length > 0) && (
+              <div className="mt-4 pt-4 border-t border-gray-200">
+                <p className={`${darkMode ? 'text-[#888]' : 'text-gray-500'} text-xs mb-2`}>Achievements</p>
+                <div className="flex flex-wrap gap-2">
+                  {/* Completed Achievements */}
+                  {stat.achievements.map((achievement, index) => (
+                    <span
+                      key={`completed-${index}`}
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${
+                        darkMode ? 'bg-[#333]' : 'bg-gray-100'
+                      }`}
+                      style={{ 
+                        backgroundColor: achievementConfig[achievement]?.color + '20',
+                        color: achievementConfig[achievement]?.color,
+                        border: `1px solid ${achievementConfig[achievement]?.color}`
+                      }}
+                    >
+                      {achievement}
+                    </span>
+                  ))}
+                  
+                  {/* In-Progress Achievements */}
+                  {stat.inProgressAchievements.map((achievement, index) => (
+                    <div
+                      key={`progress-${index}`}
+                      className="flex flex-col gap-1"
+                    >
+                      <span
+                        className={`px-2 py-1 rounded-full text-xs font-medium ${
+                          darkMode ? 'bg-[#333] text-gray-400' : 'bg-gray-100 text-gray-500'
+                        }`}
+                      >
+                        {achievement.name} ({achievement.progress}%)
+                      </span>
+                      <div className={`w-24 h-1 rounded-full overflow-hidden ${darkMode ? 'bg-[#333]' : 'bg-gray-100'}`}>
+                        <div
+                          style={{
+                            width: `${achievement.progress}%`,
+                            backgroundColor: achievement.color,
+                            height: '100%'
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ))}
       </div>
+      
+      {/* All Achievements Section */}
+      {allAchievements.length > 0 && (
+        <div className={`mt-8 p-4 rounded-xl border ${darkMode ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white border-gray-200'}`}>
+          <h2 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Your Achievements</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {allAchievements.map((achievement, index) => (
+              <div
+                key={index}
+                className={`p-3 rounded-lg ${
+                  darkMode ? 'bg-[#333]' : 'bg-gray-50'
+                }`}
+                style={{
+                  border: `1px solid ${achievementConfig[achievement]?.color}`,
+                  backgroundColor: achievementConfig[achievement]?.color + '10'
+                }}
+              >
+                <p 
+                  className="font-medium"
+                  style={{ color: achievementConfig[achievement]?.color }}
+                >
+                  {achievement}
+                </p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 } 

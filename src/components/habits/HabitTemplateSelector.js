@@ -27,6 +27,11 @@ export default function HabitTemplateSelector({ onClose, onSave, isLoading, dark
     }
   }, [templates]);
   
+  // Reload templates when category changes
+  useEffect(() => {
+    loadTemplates();
+  }, [selectedCategory]);
+  
   // Close modal when clicking outside
   useEffect(() => {
     function handleClickOutside(event) {
@@ -95,8 +100,6 @@ export default function HabitTemplateSelector({ onClose, onSave, isLoading, dark
   // Handle category selection
   const handleCategoryChange = (e) => {
     setSelectedCategory(e.target.value);
-    // Apply filter immediately when category changes
-    setTimeout(() => loadTemplates(), 0);
   };
   
   // Select a template to create habit
@@ -202,46 +205,50 @@ export default function HabitTemplateSelector({ onClose, onSave, isLoading, dark
           </div>
           
           {/* Templates Grid */}
-          {loadingTemplates ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[rgba(9,203,177,0.823)]"></div>
+          <div className="mb-6">
+            <div className="h-96 overflow-y-auto">
+              {loadingTemplates ? (
+                <div className="flex justify-center items-center h-full">
+                  <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-[rgba(9,203,177,0.823)]"></div>
+                </div>
+              ) : templates.length === 0 ? (
+                <div className="flex items-center justify-center h-full">
+                  <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
+                    No habits found. Try another search or create a custom habit.
+                  </p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-2 xl:grid-cols-3 gap-3">
+                  {templates.map((template) => (
+                    <button
+                      key={template._id}
+                      onClick={() => handleSelectTemplate(template)}
+                      className={`p-2 sm:p-3 rounded-lg text-left transition-all group ${
+                        darkMode 
+                          ? 'bg-[#333] hover:bg-[#444] border border-[#444]'
+                          : 'bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2">
+                        <div className={`text-xl flex items-center justify-center h-8 w-8 rounded-full ${
+                          darkMode ? 'bg-[#2a2a2a]' : 'bg-gray-100'
+                        }`}>
+                          {template.icon}
+                        </div>
+                        <div className="overflow-hidden flex-1">
+                          <h4 className="font-medium text-sm whitespace-normal break-words">{template.habit}</h4>
+                          <div className="flex justify-between">
+                            <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>{template.category}</p>
+                            <p className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'} ml-2`}>Followers: {template.used_count || 0}</p>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              )}
             </div>
-          ) : templates.length === 0 ? (
-            <div className="text-center py-8">
-              <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} mb-4`}>
-                No habits found. Try another search or create a custom habit.
-              </p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3 mb-6 max-h-96 overflow-y-auto">
-              {templates.map((template) => (
-                <button
-                  key={template._id}
-                  onClick={() => handleSelectTemplate(template)}
-                  className={`p-3 rounded-lg text-left transition-all group ${
-                    darkMode 
-                      ? 'bg-[#333] hover:bg-[#444] border border-[#444]'
-                      : 'bg-white hover:bg-gray-50 border border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className={`text-xl flex items-center justify-center h-8 w-8 rounded-full ${
-                      darkMode ? 'bg-[#2a2a2a]' : 'bg-gray-100'
-                    }`}>
-                      {template.icon}
-                    </div>
-                    <div className="overflow-hidden">
-                      <h4 className="font-medium text-sm truncate">{template.habit}</h4>
-                      <p className={`text-xs truncate ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                        {template.category}
-                      </p>
-                    </div>
-                  </div>
-                </button>
-              ))}
-            </div>
-          )}
-          
+          </div>
           {/* Action Buttons */}
           <div className="flex justify-between border-t pt-4 mt-4">
             <button
@@ -256,7 +263,6 @@ export default function HabitTemplateSelector({ onClose, onSave, isLoading, dark
             >
               Cancel
             </button>
-            
             <button
               type="button"
               onClick={() => setShowAddCustom(true)}
@@ -274,4 +280,4 @@ export default function HabitTemplateSelector({ onClose, onSave, isLoading, dark
       </div>
     </div>
   );
-} 
+}

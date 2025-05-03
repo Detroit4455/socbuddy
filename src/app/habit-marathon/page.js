@@ -21,12 +21,7 @@ export default function HabitMarathon() {
   const [groupName, setGroupName] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
   const [isLoading, setIsLoading] = useState(true);
-  const [view, setView] = useState('create'); // create, invitations, progress
-  const [marathonProgress, setMarathonProgress] = useState(null);
-  const [selectedMarathon, setSelectedMarathon] = useState(null);
-  const [selectedMarathonId, setSelectedMarathonId] = useState(null);
-  const [showTopUsers, setShowTopUsers] = useState(false);
-  const [topUsers, setTopUsers] = useState([]);
+  const [view, setView] = useState('create'); // create, invitations
   // Owner 'Add Participants' UI state
   const [addHabitId, setAddHabitId] = useState(null);
   const [addSearchTerm, setAddSearchTerm] = useState('');
@@ -35,6 +30,14 @@ export default function HabitMarathon() {
   // Active tab participants cache
   const [activeParticipants, setActiveParticipants] = useState({});
   const [activeLoading, setActiveLoading] = useState({});
+  // Add these new state variables at the top with other state declarations
+  const [expandedMarathons, setExpandedMarathons] = useState({});
+  const [participantDetails, setParticipantDetails] = useState({});
+  // Add this state to store details of selected users not in search results
+  const [addSelectedUserDetails, setAddSelectedUserDetails] = useState({});
+  // Replace single Add Participants UI state with per-marathon state
+  const [expandedAdd, setExpandedAdd] = useState({}); // { [marathonKey]: true/false }
+  const [addUIState, setAddUIState] = useState({}); // { [marathonKey]: { searchTerm, userSuggestions, selectedUsers, selectedUserDetails } }
 
   const handleSignOut = async () => {
     await signOut({ redirect: false });
@@ -193,7 +196,11 @@ export default function HabitMarathon() {
         throw new Error(data.error || `Failed to ${status} invitation`);
       }
       
+      const data = await response.json();
       toast.success(`Invitation ${status} successfully!`);
+      if (data.newHabitCreated && data.newHabitName) {
+        toast.success(`New Habit > ${data.newHabitName} > is added to your account`);
+      }
       loadInvitations(); // Reload invitations
     } catch (error) {
       console.error(`Error ${status} invitation:`, error);
@@ -224,30 +231,12 @@ export default function HabitMarathon() {
 
   const loadMarathonProgress = async (habitId, marathonId) => {
     try {
-      setIsLoading(true);
-      const response = await fetch(
-        `/api/habits/marathon/progress?habitId=${habitId}&marathonId=${marathonId}`
-      );
-      
-      if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.error || 'Failed to load marathon progress');
-      }
-      
-      const data = await response.json();
-      setMarathonProgress(data);
-      setSelectedMarathon(habitId);
-      setSelectedMarathonId(marathonId);
-      setView('progress');
-      
-      // Reset top users when loading new marathon progress
-      setShowTopUsers(false);
-      setTopUsers([]);
+      // Instead of loading progress and showing it in the same page,
+      // redirect to the chart view directly
+      router.push(`/habit-marathon/chart?habitId=${habitId}&marathonId=${marathonId}`);
     } catch (error) {
       console.error('Error loading marathon progress:', error);
       toast.error(error.message || 'Error loading marathon progress');
-    } finally {
-      setIsLoading(false);
     }
   };
 
@@ -280,36 +269,99 @@ export default function HabitMarathon() {
     setShowTopUsers(!showTopUsers);
   };
 
-  const searchAddUsers = async (query) => {
+  // Helper to get marathon key
+  const getMarathonKey = (habitId, marathonId) => `${habitId}_${marathonId}`;
+
+  // Handler to expand/collapse Add Participants for a marathon
+  const handleExpandAdd = (habitId, marathonId) => {
+    const key = getMarathonKey(habitId, marathonId);
+    setExpandedAdd(prev => ({ ...prev, [key]: !prev[key] }));
+    // Initialize state if not present
+    setAddUIState(prev => ({
+      ...prev,
+      [key]: prev[key] || { searchTerm: '', userSuggestions: [], selectedUsers: [], selectedUserDetails: {} }
+    }));
+  };
+
+  // Handler for search input change
+  const handleAddSearchChange = (e, habitId, marathonId) => {
+    const key = getMarathonKey(habitId, marathonId);
+    const q = e.target.value;
+    setAddUIState(prev => ({
+      ...prev,
+      [key]: { ...prev[key], searchTerm: q }
+    }));
+    searchAddUsers(q, habitId, marathonId);
+  };
+
+  // Search users for a specific marathon
+  const searchAddUsers = async (query, habitId, marathonId) => {
+    const key = getMarathonKey(habitId, marathonId);
     if (!query || query.length < 2) {
-      setAddUserSuggestions([]);
+      setAddUIState(prev => ({
+        ...prev,
+        [key]: { ...prev[key], userSuggestions: [] }
+      }));
       return;
     }
     try {
       const res = await fetch(`/api/users?search=${encodeURIComponent(query)}`);
       if (!res.ok) throw new Error('Failed to search users');
       const data = await res.json();
-      setAddUserSuggestions(data);
+      setAddUIState(prev => ({
+        ...prev,
+        [key]: { ...prev[key], userSuggestions: data }
+      }));
     } catch (err) {
-      console.error('Error searching users for add:', err);
       toast.error('Error searching users');
     }
   };
 
-  const handleAddSearchChange = (e) => {
-    const q = e.target.value;
-    setAddSearchTerm(q);
-    searchAddUsers(q);
+  // Handler to select/deselect a user for a specific marathon
+  const handleAddUserSelect = (userId, habitId, marathonId) => {
+    const key = getMarathonKey(habitId, marathonId);
+    setAddUIState(prev => {
+      const selected = prev[key]?.selectedUsers || [];
+      const newSelected = selected.includes(userId)
+        ? selected.filter(id => id !== userId)
+        : [...selected, userId];
+      return {
+        ...prev,
+        [key]: { ...prev[key], selectedUsers: newSelected }
+      };
+    });
   };
 
-  const handleAddUserSelect = (userId) => {
-    setAddSelectedUsers(prev =>
-      prev.includes(userId) ? prev.filter(id => id !== userId) : [...prev, userId]
-    );
-  };
+  // Fetch user details for selected users not in suggestions (per marathon)
+  useEffect(() => {
+    Object.entries(addUIState).forEach(([key, state]) => {
+      const missingIds = (state.selectedUsers || []).filter(
+        id => !(state.userSuggestions || []).some(u => u.id === id) && !state.selectedUserDetails?.[id]
+      );
+      if (missingIds.length > 0) {
+        fetch(`/api/users?ids=${missingIds.join(',')}`)
+          .then(res => res.json())
+          .then(data => {
+            const details = {};
+            data.forEach(u => { details[u.id] = u; });
+            setAddUIState(prev => ({
+              ...prev,
+              [key]: {
+                ...prev[key],
+                selectedUserDetails: { ...prev[key].selectedUserDetails, ...details }
+              }
+            }));
+          })
+          .catch(console.error);
+      }
+    });
+  }, [addUIState]);
 
+  // Invite additional users for a specific marathon
   const inviteAdditionalUsers = async (habitId, marathonId) => {
-    if (!habitId || addSelectedUsers.length === 0) {
+    const key = getMarathonKey(habitId, marathonId);
+    const selectedUsers = addUIState[key]?.selectedUsers || [];
+    if (!habitId || selectedUsers.length === 0) {
       toast.error('Select at least one user');
       return;
     }
@@ -317,19 +369,37 @@ export default function HabitMarathon() {
       const res = await fetch('/api/habits/marathon', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ habitId, marathonId, userIds: addSelectedUsers }),
+        body: JSON.stringify({ habitId, marathonId, userIds: selectedUsers }),
       });
       if (!res.ok) {
         const data = await res.json();
-        throw new Error(data.error || 'Failed to invite');
+        if (data.duplicateUsers || data.previouslyRejectedUsers) {
+          let message = 'Some invitations could not be sent: ';
+          if (data.duplicateUsers?.length > 0) {
+            message += `\n- Users already invited: ${data.duplicateUsers.join(', ')}`;
+          }
+          if (data.previouslyRejectedUsers?.length > 0) {
+            message += `\n- Users previously rejected: ${data.previouslyRejectedUsers.join(', ')}`;
+          }
+          toast.error(message);
+        } else {
+          throw new Error(data.error || 'Failed to invite');
+        }
+      } else {
+        const data = await res.json();
+        if (data.duplicateUsers?.length > 0 || data.previouslyRejectedUsers?.length > 0) {
+          toast.success(data.message || 'Invitations sent with some warnings');
+        } else {
+          toast.success('Participants invited successfully');
+        }
       }
-      toast.success('Participants invited successfully');
-      // reset form
-      setAddHabitId(null);
-      setAddSearchTerm(''); setAddUserSuggestions([]); setAddSelectedUsers([]);
+      // reset form for this marathon
+      setAddUIState(prev => ({
+        ...prev,
+        [key]: { searchTerm: '', userSuggestions: [], selectedUsers: [], selectedUserDetails: {} }
+      }));
       loadInvitations();
     } catch (err) {
-      console.error('Error inviting users:', err);
       toast.error(err.message || 'Error inviting users');
     }
   };
@@ -354,6 +424,57 @@ export default function HabitMarathon() {
       });
     }
   }, [view, invitations]);
+
+  // Add this new function for leaving a marathon
+  const handleLeaveMarathon = async (habitId, marathonId) => {
+    if (!confirm('Are you sure you want to leave this marathon?')) return;
+    try {
+      const res = await fetch(`/api/habits/marathon?habitId=${habitId}&marathonId=${marathonId}&leave=true`, {
+        method: 'DELETE'
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to leave marathon');
+      }
+      const data = await res.json();
+      toast.success(data.message || 'Successfully left the marathon');
+      // Refresh invitations to remove the marathon from active list
+      loadInvitations();
+    } catch (error) {
+      console.error('Error leaving marathon:', error);
+      toast.error(error.message || 'Error leaving marathon');
+    }
+  };
+
+  // Add this new function to fetch participant details
+  const fetchParticipantDetails = async (habitId, marathonId) => {
+    try {
+      const res = await fetch(`/api/habits/marathon/participants?habitId=${habitId}&marathonId=${marathonId}`);
+      if (!res.ok) throw new Error('Failed to fetch participant details');
+      const data = await res.json();
+      setParticipantDetails(prev => ({
+        ...prev,
+        [`${habitId}_${marathonId}`]: data.participants
+      }));
+    } catch (err) {
+      console.error('Error fetching participant details:', err);
+      toast.error('Failed to load participant details');
+    }
+  };
+
+  // Add this new function to handle expand/collapse
+  const toggleParticipantList = async (habitId, marathonId) => {
+    const key = `${habitId}_${marathonId}`;
+    setExpandedMarathons(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+
+    // Fetch participant details if not already loaded
+    if (!participantDetails[key]) {
+      await fetchParticipantDetails(habitId, marathonId);
+    }
+  };
 
   if (status === 'loading') {
     return (
@@ -407,45 +528,51 @@ export default function HabitMarathon() {
       />
       
       {/* Header */}
-      <header className={`${darkMode ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white border-gray-200'} border-b shadow-sm`}>
-        <div className="container mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between sm:items-center gap-3">
-          <div>
-            <h1 className={`text-xl font-semibold ${darkMode ? 'text-white' : ''}`}>Habit Marathon</h1>
-            <p className={`text-sm ${darkMode ? 'text-[#bbb]' : 'text-gray-600'}`}>{formattedDate}</p>
-          </div>
-          <div className="hidden sm:flex items-center gap-4">
-            {/* Profile dropdown */}
-            <div className="relative">
-              <button
-                onClick={() => setIsProfileOpen(prev => !prev)}
-                className={`flex items-center space-x-1 px-2 py-1 rounded-md ${darkMode ? 'hover:bg-[#444]' : 'hover:bg-gray-100'}`}
-              >
-                <span className={`${darkMode ? 'text-white' : 'text-gray-800'}`}>{session.user.username}</span>
-                <svg xmlns="http://www.w3.org/2000/svg" className={`${darkMode ? 'text-white h-4 w-4' : 'text-gray-600 h-4 w-4'}`} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                </svg>
-              </button>
-              {isProfileOpen && (
-                <div className={`absolute right-0 mt-2 w-48 rounded shadow-lg z-50 ${darkMode ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white border-gray-200'}`}>  
-                  <Link href="/profile" className={`block px-4 py-2 text-sm ${darkMode ? 'text-[#e0e0e0] hover:bg-[#444]' : 'text-gray-800 hover:bg-gray-100'}`}>Profile</Link>
-                  <button onClick={handleSignOut} className={`block w-full text-left px-4 py-2 text-sm ${darkMode ? 'text-[#e0e0e0] hover:bg-[#444]' : 'text-gray-800 hover:bg-gray-100'}`}>Sign Out</button>
-                </div>
-              )}
+      <header className={`px-4 py-3 shadow-sm ${darkMode ? 'bg-[#1e1e1e] border-b border-[#333]' : 'bg-white border-b border-gray-200'}`}>
+        <div className="container mx-auto">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center">
+              <h1 className="text-xl font-semibold">Habit Marathon</h1>
             </div>
-            <ThemeToggle darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-            <Link
-              href="/habit-tracker"
-              className={`${darkMode ? 'text-[rgba(9,203,177,0.823)]' : 'text-purple-600'} text-sm font-medium flex items-center`}
-            >
-              <HomeIcon className="h-4 w-4 mr-1" />
-              Home
-            </Link>
+            
+            <div className="flex items-center gap-2">
+              <span className="text-xs sm:text-sm font-medium">
+                Hello, {session?.user?.username}
+              </span>
+              {/* Mobile Chart button */}
+              {invitations.find(inv => inv.status === 'accepted' || inv.status === 'owner') && (
+                <Link 
+                  href={`/habit-marathon/chart?marathonId=${invitations.find(inv => inv.status === 'accepted' || inv.status === 'owner').marathonId}`}
+                  className="sm:hidden px-2 py-1 text-xs font-medium rounded-md bg-white/20 hover:bg-white/30 transition-colors flex items-center gap-1"
+                >
+                  <span className="inline-block animate-bounce">🏃‍➡️</span>
+                  Chart
+                </Link>
+              )}
+              {/* Desktop Chart button */}
+              {invitations.find(inv => inv.status === 'accepted' || inv.status === 'owner') && (
+                <Link 
+                  href={`/habit-marathon/chart?marathonId=${invitations.find(inv => inv.status === 'accepted' || inv.status === 'owner').marathonId}`}
+                  className={`hidden sm:block px-3 py-1 text-sm font-medium rounded-full ${
+                    darkMode 
+                      ? 'bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)] hover:bg-[rgba(9,203,177,0.3)]'
+                      : 'bg-purple-100 text-purple-600 hover:bg-purple-200'
+                  } transition-colors`}
+                >
+                  View Chart
+                </Link>
+              )}
+              <ThemeToggle darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+              <Link href="/habit-tracker" className={`${darkMode ? 'text-white hover:text-gray-300' : 'text-gray-800 hover:text-gray-600'} transition-colors`}>
+                <HomeIcon className="h-6 w-6" />
+              </Link>
+            </div>
           </div>
         </div>
       </header>
       
       {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
+      <main className="container mx-auto py-6 px-4">
         {/* Navigation Tabs */}
         <div className="flex flex-wrap gap-2 mb-6">
           <button
@@ -503,57 +630,166 @@ export default function HabitMarathon() {
               </span>
             )}
           </button>
-          {marathonProgress && (
-            <button 
-              onClick={() => setView('progress')}
-              className={`px-4 py-2 rounded-lg text-sm font-medium ${
-                view === 'progress' 
-                  ? darkMode 
-                    ? 'bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)]' 
-                    : 'bg-purple-100 text-purple-600'
-                  : darkMode
-                    ? 'text-[#bbb] hover:bg-[#333]'
-                    : 'text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              Marathon Progress
-            </button>
-          )}
         </div>
         
         {view === 'active' && (
           <div className={`${darkMode ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white border-gray-200'} border rounded-lg shadow-sm p-4 sm:p-6 mb-6`}>
             <h2 className={`text-xl font-semibold mb-4 ${darkMode ? 'text-white' : ''}`}>Active Marathons</h2>
-            {invitations.filter(inv => inv.status === 'accepted').length === 0 ? (
+            {invitations.filter(inv => inv.status === 'accepted').length === 0 && invitations.filter(inv => inv.isOwner).length === 0 ? (
               <p className={`text-center py-6 ${darkMode ? 'text-[#bbb]' : 'text-gray-500'}`}>No active marathons.</p>
             ) : (
               <div className="space-y-4">
-                {invitations.filter(inv => inv.status === 'accepted').map(inv => (
-                  <div key={inv.habitId} className={`${darkMode ? 'bg-[#333] border-[#444]' : 'bg-gray-50 border-gray-200'} border rounded-lg p-4`}> 
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <h4 className={`text-md font-medium ${darkMode ? 'text-white' : ''}`}>{inv.name}</h4>
-                        <p className={`text-sm ${darkMode ? 'text-[#bbb]' : 'text-gray-600'}`}>Owner: {inv.ownerName}</p>
-                      </div>
-                      <button
-                        onClick={() => loadMarathonProgress(inv.habitId, inv.marathonId)}
-                        className={`px-3 py-1 rounded-md text-sm ${darkMode ? 'bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)]' : 'bg-purple-50 text-purple-600 hover:bg-purple-100'}`}>
-                        View Progress
-                      </button>
-                    </div>
-                    <div className="mt-2">
-                      {activeLoading[inv.habitId] ? (
-                        <span className="text-sm text-gray-500">Loading participants…</span>
-                      ) : (
-                        <div className="flex flex-wrap gap-2">
-                          {activeParticipants[inv.habitId]?.map(p => (
-                            <span key={p.userId} className={`px-2 py-1 rounded-full text-sm ${darkMode ? 'bg-[#444] text-white' : 'bg-gray-200 text-gray-800'}`}>{p.username}</span>
-                          ))}
+                {/* Your Created Marathons */}
+                {invitations.filter(inv => inv.isOwner).length > 0 && (
+                  <>
+                    <h3 className={`text-lg font-medium mb-3 ${darkMode ? 'text-white' : ''}`}>Your Created Marathons</h3>
+                    {invitations
+                      .filter(inv => inv.isOwner)
+                      .map(invitation => {
+                        const { pending: pendingCount = 0, accepted: acceptedCount = 0, rejected: rejectedCount = 0 } = invitation.marathonStats || {};
+                        const key = `${invitation.habitId}_${invitation.marathonId}`;
+                        const isExpanded = expandedMarathons[key];
+                        const participants = participantDetails[key] || [];
+                        
+                        return (
+                          <div 
+                            key={invitation.habitId + '_' + invitation.marathonId}
+                            className={`${darkMode ? 'bg-[#333] border-[#444]' : 'bg-gray-50 border-gray-200'} border rounded-lg p-4`}
+                          >
+                            <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-3">
+                              <div className="flex-1">
+                                <h4 className={`text-md font-medium ${darkMode ? 'text-white' : ''}`}>{invitation.name}</h4>
+                                {invitation.groupName && (
+                                  <p className={`text-sm ${darkMode ? 'text-[#bbb]' : 'text-gray-600'}`}>Group: {invitation.groupName}</p>
+                                )}
+                                <div className="flex items-center gap-2 mt-1">
+                                  <p className={`text-sm ${darkMode ? 'text-[#bbb]' : 'text-gray-600'}`}>
+                                    Participants: {acceptedCount} accepted, {pendingCount} pending, {rejectedCount} rejected
+                                  </p>
+                                  <button
+                                    onClick={() => toggleParticipantList(invitation.habitId, invitation.marathonId)}
+                                    className={`text-xs px-2 py-0.5 rounded-full ${
+                                      darkMode 
+                                        ? 'bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)] hover:bg-[rgba(9,203,177,0.3)]'
+                                        : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
+                                    }`}
+                                  >
+                                    {isExpanded ? 'Hide Details' : 'Show Details'}
+                                  </button>
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <button
+                                  onClick={() => loadMarathonProgress(invitation.habitId, invitation.marathonId)}
+                                  className={`px-3 py-1 rounded-md text-sm ${
+                                    darkMode 
+                                      ? 'bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)] hover:bg-[rgba(9,203,177,0.3)]'
+                                      : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
+                                  }`}
+                                >
+                                  View Progress
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteMarathon(invitation.habitId, invitation.marathonId)}
+                                  className={`px-3 py-1 rounded-md text-sm ${
+                                    darkMode 
+                                      ? 'bg-red-900/20 text-red-400 hover:bg-red-900/30'
+                                      : 'bg-red-50 text-red-600 hover:bg-red-100'
+                                  }`}
+                                >
+                                  Delete
+                                </button>
+                              </div>
+                            </div>
+                            
+                            {/* Participant Details */}
+                            {isExpanded && (
+                              <div className={`mt-3 pt-3 border-t ${darkMode ? 'border-[#444]' : 'border-gray-200'}`}>
+                                <div className="space-y-2">
+                                  {participants.length > 0 ? (
+                                    participants.map(participant => (
+                                      <div 
+                                        key={participant.userId}
+                                        className={`flex items-center justify-between p-2 rounded-md ${
+                                          darkMode ? 'bg-[#2a2a2a]' : 'bg-white'
+                                        }`}
+                                      >
+                                        <span className={`text-sm ${darkMode ? 'text-white' : 'text-gray-800'}`}>
+                                          {participant.username}
+                                        </span>
+                                        <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                          participant.status === 'accepted' 
+                                            ? darkMode ? 'bg-green-900/20 text-green-400' : 'bg-green-50 text-green-600'
+                                            : participant.status === 'rejected'
+                                              ? darkMode ? 'bg-red-900/20 text-red-400' : 'bg-red-50 text-red-600'
+                                              : darkMode ? 'bg-yellow-900/20 text-yellow-400' : 'bg-yellow-50 text-yellow-600'
+                                        }`}>
+                                          {participant.status.charAt(0).toUpperCase() + participant.status.slice(1)}
+                                        </span>
+                                      </div>
+                                    ))
+                                  ) : (
+                                    <p className={`text-sm text-center ${darkMode ? 'text-[#bbb]' : 'text-gray-500'}`}>
+                                      Loading participant details...
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                  </>
+                )}
+
+                {/* Accepted Marathons */}
+                {invitations.filter(inv => inv.status === 'accepted').length > 0 && (
+                  <>
+                    <h3 className={`text-lg font-medium mt-6 mb-3 ${darkMode ? 'text-white' : ''}`}>Marathons You've Joined</h3>
+                    {invitations
+                      .filter(inv => inv.status === 'accepted')
+                      .map(invitation => (
+                        <div 
+                          key={invitation.habitId + '_' + invitation.marathonId}
+                          className={`${darkMode ? 'bg-[#333] border-[#444]' : 'bg-gray-50 border-gray-200'} border rounded-lg p-4`}
+                        >
+                          <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-3">
+                            <div>
+                              <h4 className={`text-md font-medium ${darkMode ? 'text-white' : ''}`}>{invitation.name}</h4>
+                              {invitation.groupName && (
+                                <p className={`text-sm ${darkMode ? 'text-[#bbb]' : 'text-gray-600'}`}>Group: {invitation.groupName}</p>
+                              )}
+                              <p className={`text-sm ${darkMode ? 'text-[#bbb]' : 'text-gray-600'}`}>
+                                Marathon with: {invitation.ownerName}
+                              </p>
+                            </div>
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => loadMarathonProgress(invitation.habitId, invitation.marathonId)}
+                                className={`px-3 py-1 rounded-md text-sm ${
+                                  darkMode 
+                                    ? 'bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)] hover:bg-[rgba(9,203,177,0.3)]'
+                                    : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
+                                }`}
+                              >
+                                View Progress
+                              </button>
+                              <button
+                                onClick={() => handleLeaveMarathon(invitation.habitId, invitation.marathonId)}
+                                className={`px-3 py-1 rounded-md text-sm ${
+                                  darkMode 
+                                    ? 'bg-red-900/20 text-red-400 hover:bg-red-900/30'
+                                    : 'bg-red-50 text-red-600 hover:bg-red-100'
+                                }`}
+                              >
+                                Leave Marathon
+                              </button>
+                            </div>
+                          </div>
                         </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                      ))}
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -857,8 +1093,9 @@ export default function HabitMarathon() {
                               View Progress
                             </button>
                               <button
-                                onClick={() => setAddHabitId(invitation.habitId)}
-                                className={`px-3 py-1 rounded-md text-sm ${darkMode ? 'bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)]' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}>
+                                onClick={() => handleExpandAdd(invitation.habitId, invitation.marathonId)}
+                                className={`px-3 py-1 rounded-md text-sm ${darkMode ? 'bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)]' : 'bg-green-50 text-green-600 hover:bg-green-100'}`}
+                              >
                                 Add Participants
                               </button>
                               <button
@@ -870,34 +1107,46 @@ export default function HabitMarathon() {
                           </div>
                           </div>
                           {/* Add Participants Form */}
-                          {addHabitId === invitation.habitId && (
+                          {expandedAdd[getMarathonKey(invitation.habitId, invitation.marathonId)] && (
                             <div className={`${darkMode ? 'bg-[#2a2a2a]' : 'bg-white'} border ${darkMode ? 'border-[#444]' : 'border-gray-200'} rounded-lg p-4 mt-4`}>
                               <input
                                 type="text"
-                                value={addSearchTerm}
-                                onChange={handleAddSearchChange}
+                                value={addUIState[getMarathonKey(invitation.habitId, invitation.marathonId)]?.searchTerm || ''}
+                                onChange={e => handleAddSearchChange(e, invitation.habitId, invitation.marathonId)}
                                 placeholder="Search users to invite"
                                 className={`w-full px-3 py-2 rounded-md ${darkMode ? 'bg-[#333] border-[#444] text-white' : 'bg-white border-gray-300'}`}
                               />
-                              {addUserSuggestions.length > 0 && (
-                                <div className={`${darkMode ? 'bg-[#333] border-[#444]' : 'bg-white border-gray-200'} border rounded-md mt-2 max-h-40 overflow-y-auto`}>  
-                                  {addUserSuggestions.map(u => (
+                              {(addUIState[getMarathonKey(invitation.habitId, invitation.marathonId)]?.userSuggestions.length > 0) && (
+                                <div className={`${darkMode ? 'bg-[#333] border-[#444]' : 'bg-white border-gray-200'} border rounded-md mt-2 max-h-40 overflow-y-auto`}>
+                                  {addUIState[getMarathonKey(invitation.habitId, invitation.marathonId)]?.userSuggestions.map(u => (
                                     <div
                                       key={u.id}
-                                      className={`flex items-center px-3 py-2 cursor-pointer ${addSelectedUsers.includes(u.id) ? (darkMode ? 'bg-[rgba(9,203,177,0.2)]' : 'bg-green-50') : ''}`}
-                                      onClick={() => handleAddUserSelect(u.id)}>
-                                      <input type="checkbox" checked={addSelectedUsers.includes(u.id)} readOnly className="mr-2" />
+                                      className={`flex items-center px-3 py-2 cursor-pointer ${addUIState[getMarathonKey(invitation.habitId, invitation.marathonId)]?.selectedUsers.includes(u.id) ? (darkMode ? 'bg-[rgba(9,203,177,0.2)]' : 'bg-green-50') : ''}`}
+                                      onClick={() => handleAddUserSelect(u.id, invitation.habitId, invitation.marathonId)}>
+                                      <input type="checkbox" checked={addUIState[getMarathonKey(invitation.habitId, invitation.marathonId)]?.selectedUsers.includes(u.id)} readOnly className="mr-2" />
                                       <span>{u.username}</span>
                                     </div>
                                   ))}
                                 </div>
                               )}
-                              {addSelectedUsers.length > 0 && (
+                              {(addUIState[getMarathonKey(invitation.habitId, invitation.marathonId)]?.selectedUsers.length > 0) && (
                                 <div className="mt-2 flex flex-wrap gap-2">
-                                  {addSelectedUsers.map(id => {
-                                    const user = addUserSuggestions.find(u => u.id === id);
+                                  {addUIState[getMarathonKey(invitation.habitId, invitation.marathonId)]?.selectedUsers.map(id => {
+                                    const user = (addUIState[getMarathonKey(invitation.habitId, invitation.marathonId)]?.userSuggestions || []).find(u => u.id === id) || (addUIState[getMarathonKey(invitation.habitId, invitation.marathonId)]?.selectedUserDetails || {})[id];
                                     return user ? (
-                                      <span key={id} className={`px-2 py-1 rounded-md text-sm ${darkMode ? 'bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)]' : 'bg-green-100 text-green-600'}`}>{user.username}</span>
+                                      <div
+                                        key={id}
+                                        className={`flex items-center px-2 py-1 rounded-md text-sm ${darkMode ? 'bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)]' : 'bg-purple-100 text-purple-600'}`}
+                                      >
+                                        {user.username}
+                                        <button
+                                          onClick={() => handleAddUserSelect(id, invitation.habitId, invitation.marathonId)}
+                                          className="ml-2 text-xs p-1"
+                                          aria-label="Remove user"
+                                        >
+                                          ✕
+                                        </button>
+                                      </div>
                                     ) : null;
                                   })}
                                 </div>
@@ -905,8 +1154,8 @@ export default function HabitMarathon() {
                               <div className="mt-3">
                                 <button
                                   onClick={() => inviteAdditionalUsers(invitation.habitId, invitation.marathonId)}
-                                  disabled={addSelectedUsers.length === 0}
-                                  className={`px-4 py-2 rounded-md text-sm font-medium ${addSelectedUsers.length === 0 ? 'opacity-50 cursor-not-allowed' : (darkMode ? 'bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)] hover:bg-[rgba(9,203,177,0.3)]' : 'bg-green-600 text-white hover:bg-green-700')}`}
+                                  disabled={!(addUIState[getMarathonKey(invitation.habitId, invitation.marathonId)]?.selectedUsers.length > 0)}
+                                  className={`px-4 py-2 rounded-md text-sm font-medium ${!(addUIState[getMarathonKey(invitation.habitId, invitation.marathonId)]?.selectedUsers.length > 0) ? 'opacity-50 cursor-not-allowed' : (darkMode ? 'bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)] hover:bg-[rgba(9,203,177,0.3)]' : 'bg-green-600 text-white hover:bg-green-700')}`}
                                 >Invite</button>
                               </div>
                             </div>
@@ -917,173 +1166,6 @@ export default function HabitMarathon() {
                 )}
               </div>
             )}
-          </div>
-        )}
-        
-        {view === 'progress' && marathonProgress && (
-          <div className={`${darkMode ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white border-gray-200'} border rounded-lg shadow-sm p-4 sm:p-6 mb-6`}>
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-3">
-              <h2 className={`text-xl font-semibold ${darkMode ? 'text-white' : ''}`}>
-                Marathon Progress: {marathonProgress.habitName}
-              </h2>
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={toggleTopUsers}
-                  className={`text-sm px-3 py-1 rounded-md ${darkMode 
-                      ? 'bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)] hover:bg-[rgba(9,203,177,0.3)]'
-                      : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
-                  }`}
-                >
-                  {showTopUsers ? 'Hide Top 3' : 'Show Top 3'}
-                </button>
-                <button
-                  onClick={() => setView('invitations')}
-                  className={`text-sm ${darkMode ? 'text-[rgba(9,203,177,0.823)]' : 'text-purple-600'}`}
-                >
-                  Back to Invitations
-                </button>
-                <Link href={`/habit-marathon/chart?habitId=${marathonProgress.habitId}`}> 
-                  <button
-                    className={`text-sm px-3 py-1 rounded-md ${darkMode 
-                      ? 'bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)] hover:bg-[rgba(9,203,177,0.3)]'
-                      : 'bg-purple-50 text-purple-600 hover:bg-purple-100'
-                    }`}
-                  >
-                    View Chart
-                  </button>
-                </Link>
-              </div>
-            </div>
-            
-            {showTopUsers && (
-              <div className={`mb-6 rounded-lg ${darkMode ? 'bg-[#333] border-[#444]' : 'bg-gray-50 border-gray-200'} border p-4`}>
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className={`text-lg font-medium ${darkMode ? 'text-white' : ''}`}>Top 3 Users</h3>
-                  <div className={`text-xs ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                    Ranked by: <span className="font-semibold">Days Completed</span>
-                  </div>
-                </div>
-                
-                {isLoading && topUsers.length === 0 ? (
-                  <div className="flex justify-center items-center py-8">
-                    <div className={`animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 ${darkMode ? 'border-[rgba(9,203,177,0.823)]' : 'border-purple-500'}`}></div>
-                  </div>
-                ) : topUsers.length > 0 ? (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    {topUsers.map((user, index) => (
-                      <div key={user.userId} className={`flex items-center p-4 rounded-lg ${
-                        index === 0 
-                          ? darkMode ? 'bg-amber-900 bg-opacity-20 border border-amber-700' : 'bg-amber-50 border border-amber-200' 
-                          : index === 1 
-                            ? darkMode ? 'bg-slate-800 bg-opacity-50 border border-slate-600' : 'bg-slate-100 border border-slate-300'
-                            : darkMode ? 'bg-orange-900 bg-opacity-20 border border-orange-700' : 'bg-orange-50 border border-orange-200'
-                      }`}>
-                        <div className={`flex items-center justify-center w-10 h-10 rounded-full mr-3 ${
-                          index === 0 
-                            ? darkMode ? 'bg-amber-900 bg-opacity-40 text-amber-300' : 'bg-amber-100 text-amber-600'
-                            : index === 1
-                              ? darkMode ? 'bg-slate-800 text-slate-300' : 'bg-slate-200 text-slate-600'
-                              : darkMode ? 'bg-orange-900 bg-opacity-40 text-orange-300' : 'bg-orange-100 text-orange-600'
-                        }`}>
-                          {index === 0 ? '🥇' : index === 1 ? '🥈' : '🥉'}
-                        </div>
-                        <div className="w-full">
-                          <div className="flex justify-between items-center mb-1">
-                            <h4 className={`font-medium ${darkMode ? 'text-white' : 'text-gray-800'}`}>{user.username}</h4>
-                            <div className="flex items-center gap-1">
-                              <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
-                                darkMode ? 'bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)]' : 'bg-purple-100 text-purple-600'
-                              }`}>
-                                {user.completedDays} days
-                              </span>
-                              <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${
-                                darkMode ? 'bg-[#444] text-white' : 'bg-gray-200 text-gray-700'
-                              }`}>
-                                {user.completionRate}%
-                              </span>
-                            </div>
-                          </div>
-                          <div className="flex items-center">
-                            <div className="w-full bg-gray-200 rounded-full h-1.5 dark:bg-gray-700">
-                              <div 
-                                className="h-1.5 rounded-full" 
-                                style={{ 
-                                  width: `${user.completionRate}%`,
-                                  backgroundColor: darkMode ? 'rgba(9,203,177,0.823)' : '#8b5cf6'
-                                }}
-                              ></div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p className={`text-center py-4 ${darkMode ? 'text-[#bbb]' : 'text-gray-500'}`}>
-                    No top users data available.
-                  </p>
-                )}
-              </div>
-            )}
-            
-            <div className={`overflow-x-auto rounded-lg ${darkMode ? 'bg-[#333] border-[#444]' : 'bg-gray-50 border-gray-200'} border`}>
-              <table className="min-w-full divide-y divide-gray-200">
-                <thead className={darkMode ? 'bg-[#222]' : 'bg-gray-100'}>
-                  <tr>
-                    <th scope="col" className={`px-3 sm:px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
-                      Rank
-                    </th>
-                    <th scope="col" className={`px-3 sm:px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
-                      User
-                    </th>
-                    <th scope="col" className={`px-3 sm:px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
-                      Completed
-                    </th>
-                    <th scope="col" className={`px-3 sm:px-6 py-3 text-left text-xs font-medium ${darkMode ? 'text-gray-400' : 'text-gray-500'} uppercase tracking-wider`}>
-                      Rate
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className={`divide-y ${darkMode ? 'divide-[#444]' : 'divide-gray-200'}`}>
-                  {marathonProgress.participants.map((participant, index) => (
-                    <tr key={participant.userId} className={index % 2 === 0 ? (darkMode ? 'bg-[#333]' : 'bg-white') : (darkMode ? 'bg-[#2a2a2a]' : 'bg-gray-50')}>
-                      <td className={`px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                        {index + 1}
-                      </td>
-                      <td className={`px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                        {participant.username}
-                        {participant.userId === session.user.id && (
-                          <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
-                            darkMode ? 'bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)]' : 'bg-purple-100 text-purple-600'
-                          }`}>
-                            You
-                          </span>
-                        )}
-                      </td>
-                      <td className={`px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                        {participant.completedDays}/{participant.totalDays}
-                      </td>
-                      <td className={`px-3 sm:px-6 py-3 sm:py-4 whitespace-nowrap`}>
-                        <div className="flex items-center">
-                          <div className="w-14 sm:w-24 bg-gray-200 rounded-full h-2 mr-2 dark:bg-gray-700">
-                            <div 
-                              className="h-2 rounded-full" 
-                              style={{ 
-                                width: `${participant.completionRate}%`,
-                                backgroundColor: darkMode ? 'rgba(9,203,177,0.823)' : '#8b5cf6'
-                              }}
-                            ></div>
-                          </div>
-                          <span className={`text-sm ${darkMode ? 'text-white' : 'text-gray-900'}`}>
-                            {participant.completionRate}%
-                          </span>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
           </div>
         )}
       </main>

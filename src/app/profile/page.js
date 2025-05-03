@@ -1,12 +1,44 @@
 'use client';
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
 export default function Profile() {
   const { data: session, status } = useSession();
+  const [isEditing, setIsEditing] = useState(false);
+  const [phoneNumber, setPhoneNumber] = useState(session?.user?.phoneNumber || '');
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState('');
+
+  const handleUpdate = async () => {
+    try {
+      setIsLoading(true);
+      const response = await fetch('/api/users', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ phoneNumber }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage('Profile updated successfully!');
+        setIsEditing(false);
+        // Update session data
+        session.user.phoneNumber = phoneNumber;
+      } else {
+        setMessage(data.error || 'Failed to update profile');
+      }
+    } catch (error) {
+      setMessage('An error occurred while updating the profile');
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   if (status === 'loading') {
     return (
@@ -68,6 +100,40 @@ export default function Profile() {
                     {session?.user?.role || 'user'}
                   </div>
                 </div>
+
+                <div>
+                  <div className="flex justify-between items-center mb-1">
+                    <label className="block text-sm text-gray-400">Phone Number</label>
+                    <button
+                      onClick={() => setIsEditing(!isEditing)}
+                      className="text-[rgba(9,203,177,0.823)] hover:text-[rgba(9,203,177,1)] text-sm"
+                    >
+                      {isEditing ? 'Cancel' : 'Edit'}
+                    </button>
+                  </div>
+                  {isEditing ? (
+                    <div className="space-y-2">
+                      <input
+                        type="tel"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                        className="w-full bg-[#333] py-2 px-4 rounded-md text-white focus:outline-none focus:ring-2 focus:ring-[rgba(9,203,177,0.5)]"
+                        placeholder="Enter phone number"
+                      />
+                      <button
+                        onClick={handleUpdate}
+                        disabled={isLoading}
+                        className="w-full bg-[rgba(9,203,177,0.823)] hover:bg-[rgba(9,203,177,1)] text-white py-2 px-4 rounded-md transition-colors disabled:opacity-50"
+                      >
+                        {isLoading ? 'Updating...' : 'Save Changes'}
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="bg-[#333] py-2 px-4 rounded-md text-white">
+                      {session?.user?.phoneNumber || 'Not available'}
+                    </div>
+                  )}
+                </div>
                 
                 <div>
                   <label className="block text-sm text-gray-400 mb-1">Account ID</label>
@@ -76,6 +142,12 @@ export default function Profile() {
                   </div>
                 </div>
               </div>
+
+              {message && (
+                <div className={`p-4 rounded-md ${message.includes('success') ? 'bg-green-900/50' : 'bg-red-900/50'} text-white text-center`}>
+                  {message}
+                </div>
+              )}
             </div>
           </div>
         </div>

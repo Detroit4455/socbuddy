@@ -11,7 +11,8 @@ export default function HabitDetails({
   nextMonth,
   formatMonthYear,
   formatMonthName,
-  getCompletionRate
+  getCompletionRate,
+  habits
 }) {
   return (
     <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -190,22 +191,176 @@ export default function HabitDetails({
       <div className="lg:col-span-4">
         <div className={`${darkMode ? 'bg-[#2a2a2a] border-[#444]' : 'bg-white border-gray-200'} rounded-lg shadow-sm border p-6 h-full`}>
           <h3 className={`text-lg font-medium mb-6 ${darkMode ? 'text-white' : ''}`}>Achievements</h3>
-          <div className="space-y-4">
-            {[
-              { emoji: '🔥', label: '3 Day Streak', threshold: 3 },
-              { emoji: '🏆', label: '7 Day Streak', threshold: 7 },
-              { emoji: '⭐', label: 'Monthly Master', threshold: 30 }
-            ].map(({ emoji, label, threshold }) => (
-              <div key={label} className={`p-4 rounded-lg ${selectedHabit.longestStreak >= threshold ? (darkMode ? 'bg-[rgba(9,203,177,0.1)]' : 'bg-yellow-50') : (darkMode ? 'bg-[#333]' : 'bg-gray-50')}`}>
-                <div className="flex items-center gap-3">
-                  <div className="text-2xl">{emoji}</div>
-                  <div>
-                    <h4 className={`font-medium ${darkMode ? 'text-white' : ''}`}>{label}</h4>
-                    <p className={`text-sm ${darkMode ? 'text-[#888]' : 'text-gray-500'}`}>{selectedHabit.longestStreak >= threshold ? 'Completed' : 'In Progress'}</p>
+          {/* Milestone Achievements */}
+          <div className="mb-4">
+            <h4 className={`text-md font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>🎯 Milestone Achievements</h4>
+            <div className="space-y-2">
+              {(() => {
+                const allHabits = Array.isArray(habits) ? habits : [];
+                // First Step: Mark your first habit as complete
+                const firstStepAchieved = allHabits.some(h => (h.streakData||[]).some(e => e.completed));
+                // 50 Times Club: Complete any habit 50 times
+                const fiftyTimesAchieved = allHabits.some(h => (h.streakData||[]).filter(e => e.completed).length >= 50);
+                // Habit Hero: Complete 500 total habit entries
+                const totalCompletions = allHabits.reduce((sum, h) => sum + (h.streakData||[]).filter(e => e.completed).length, 0);
+                const habitHeroAchieved = totalCompletions >= 500;
+                const milestoneAchievements = [
+                  {
+                    label: 'First Step',
+                    description: 'Mark your first habit as complete',
+                    achieved: firstStepAchieved,
+                    icon: '👣',
+                  },
+                  {
+                    label: '50 Times Club',
+                    description: 'Complete any habit 50 times',
+                    achieved: fiftyTimesAchieved,
+                    icon: '🏅',
+                  },
+                  {
+                    label: 'Habit Hero',
+                    description: 'Complete 500 total habit entries',
+                    achieved: habitHeroAchieved,
+                    icon: '🦸',
+                  },
+                ];
+                return milestoneAchievements.map(({ label, description, achieved, icon }) => (
+                  <div
+                    key={label}
+                    className={`py-1 px-2 rounded-lg flex items-center gap-1 group transition-colors duration-300 shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform ${achieved ? (darkMode ? 'bg-[rgba(9,203,177,0.1)]' : 'bg-white') : (darkMode ? 'bg-[#333]' : 'bg-gray-50')}`}
+                    style={achieved ? { border: '1.5px solid #6366f1' } : {}}
+                  >
+                    <div className={`text-2xl flex-shrink-0 transition-colors duration-300 ${achieved ? '' : 'opacity-40 grayscale'}`}>{icon}</div>
+                    <div>
+                      <h4 className={`font-medium transition-colors duration-300 ${achieved ? (darkMode ? 'text-white' : 'text-gray-800') : (darkMode ? 'text-[#888]' : 'text-gray-400')}`}>{label}</h4>
+                      <p className={`text-sm transition-colors duration-300 ${achieved ? (darkMode ? 'text-[rgba(9,203,177,0.823)]' : 'text-green-600') : (darkMode ? 'text-[#888]' : 'text-gray-500')}`}>{achieved ? 'Completed' : 'In Progress'}</p>
+                    </div>
+                    {/* Tooltip on hover */}
+                    <div className="ml-auto relative">
+                      <div className="hidden group-hover:block absolute left-full top-1/2 z-10 -translate-y-1/2 ml-2 bg-white dark:bg-[#222] text-gray-800 dark:text-white text-xs rounded shadow-lg px-3 py-2 w-56 border border-gray-200 dark:border-[#444] whitespace-normal">
+                        {description}
+                      </div>
+                    </div>
                   </div>
+                ));
+              })()}
+            </div>
+          </div>
+          {/* Streak-Based Achievements */}
+          <div className="mt-2">
+            <h4 className={`text-md font-semibold mb-2 ${darkMode ? 'text-white' : 'text-gray-800'}`}>🔥 Streak-Based Achievements</h4>
+            <div className="space-y-2">
+              {[
+                { emoji: '🔥', label: '3 Day Streak', threshold: 3, color: '#F87171', description: 'Complete a habit for 3 days in a row.' },
+                { emoji: '🏆', label: '7 Day Streak', threshold: 7, color: '#FBBF24', description: 'Complete a habit for 7 days in a row.' },
+                { emoji: '🥈', label: '15 Day Streak', threshold: 15, color: '#60A5FA', description: 'Complete a habit for 15 days in a row.' },
+                { emoji: '💪', label: '30-Day Warrior', threshold: 30, color: '#A78BFA', description: 'Maintain a 30-day streak.' },
+                { emoji: '👑', label: '100-Day Legend', threshold: 100, color: '#F59E42', description: 'Complete any habit for 100 days straight.' },
+                { emoji: '🔄', label: 'Comeback Kid', threshold: 1, isComeback: true, color: '#34D399', description: 'Restart a streak after missing 3+ days.' }
+              ].map(({ emoji, label, threshold, isComeback, color, description }) => {
+                const achieved = selectedHabit.achievements?.includes(label);
+                let inProgress = false;
+                let progress = 0;
+                if (!achieved) {
+                  if (isComeback) {
+                    const entries = selectedHabit.streakData || [];
+                    const lastBreak = entries.findIndex(entry => !entry.completed);
+                    if (lastBreak > 0) {
+                      const breakDate = new Date(entries[lastBreak].date);
+                      const streakStartDate = new Date(entries[0].date);
+                      const breakDuration = Math.ceil((breakDate - streakStartDate) / (1000 * 60 * 60 * 24));
+                      inProgress = breakDuration >= 3 && selectedHabit.currentStreak > 0;
+                    }
+                  } else {
+                    inProgress = selectedHabit.currentStreak > 0 && selectedHabit.currentStreak < threshold;
+                    progress = Math.min(Math.round((selectedHabit.currentStreak / threshold) * 100), 100);
+                  }
+                }
+                return (
+                  <div
+                    key={label}
+                    className={`py-1 px-2 rounded-lg flex items-center gap-1 group transition-colors duration-300 shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform ${achieved ? (darkMode ? 'bg-[rgba(9,203,177,0.1)]' : 'bg-white') : (darkMode ? 'bg-[#333]' : 'bg-gray-50')}`}
+                    style={achieved ? { border: `1.5px solid ${color}` } : {}}
+                  >
+                    <div className={`text-2xl flex-shrink-0 transition-colors duration-300 ${achieved ? '' : 'opacity-40 grayscale'}`} style={achieved ? { color } : {}}>{emoji}</div>
+                    <div>
+                      <h4 className={`font-medium transition-colors duration-300 ${achieved ? (darkMode ? 'text-white' : 'text-gray-800') : (darkMode ? 'text-[#888]' : 'text-gray-400')}`}>{label}</h4>
+                      <p className={`text-sm transition-colors duration-300 ${achieved ? (darkMode ? 'text-[rgba(9,203,177,0.823)]' : 'text-green-600') : (darkMode ? 'text-[#888]' : 'text-gray-500')}`}>{achieved ? 'Completed' : 'In Progress'}</p>
+                      {!achieved && !isComeback && inProgress && (
+                        <div className="mt-1 w-32 h-1 bg-gray-200 rounded-full overflow-hidden">
+                          <div style={{ width: `${progress}%` }} className="h-full bg-[rgba(9,203,177,0.823)] transition-all duration-500"></div>
+                        </div>
+                      )}
+                    </div>
+                    {/* Tooltip on hover */}
+                    <div className="ml-auto relative">
+                      <div className="hidden group-hover:block absolute left-full top-1/2 z-10 -translate-y-1/2 ml-2 bg-white dark:bg-[#222] text-gray-800 dark:text-white text-xs rounded shadow-lg px-3 py-2 w-56 border border-gray-200 dark:border-[#444] whitespace-normal">
+                        {description}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+          {/* Habit Variety Achievements */}
+          <div className="mt-8">
+            <h4 className={`text-md font-semibold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>🧩 Habit Variety Achievements</h4>
+            {(() => {
+              // Use the real habits prop
+              const allHabits = Array.isArray(habits) ? habits : [];
+              // Explorer: 5+ habits
+              const explorerAchieved = allHabits.length >= 5;
+              // All-Rounder: 3+ unique categories
+              const uniqueCategories = [...new Set(allHabits.map(h => h.category || 'General'))];
+              const allRounderAchieved = uniqueCategories.length >= 3;
+              // Master of Many: 10+ unique completed habits
+              const completedHabits = allHabits.filter(h => (h.streakData||[]).some(e => e.completed));
+              const masterOfManyAchieved = completedHabits.length >= 10;
+              const varietyAchievements = [
+                {
+                  label: 'Explorer',
+                  description: 'Add 5 different habits',
+                  achieved: explorerAchieved,
+                  icon: '🧭',
+                },
+                {
+                  label: 'All-Rounder',
+                  description: 'Maintain habits in 3+ categories (e.g., Health, Productivity, Wellness)',
+                  achieved: allRounderAchieved,
+                  icon: '🌈',
+                },
+                {
+                  label: 'Master of Many',
+                  description: 'Successfully complete 10 unique habits',
+                  achieved: masterOfManyAchieved,
+                  icon: '🎯',
+                },
+              ];
+              return (
+                <div className="space-y-4">
+                  {varietyAchievements.map(({ label, description, achieved, icon }) => (
+                    <div
+                      key={label}
+                      className={`py-1 px-2 rounded-lg flex items-center gap-1 group transition-colors duration-300 shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform ${achieved ? (darkMode ? 'bg-[rgba(9,203,177,0.1)]' : 'bg-white') : (darkMode ? 'bg-[#333]' : 'bg-gray-50')}`}
+                      style={achieved ? { border: '1.5px solid #09cbb1' } : {}}
+                    >
+                      <div className={`text-2xl flex-shrink-0 transition-colors duration-300 ${achieved ? '' : 'opacity-40 grayscale'}`}>{icon}</div>
+                      <div>
+                        <h4 className={`font-medium transition-colors duration-300 ${achieved ? (darkMode ? 'text-white' : 'text-gray-800') : (darkMode ? 'text-[#888]' : 'text-gray-400')}`}>{label}</h4>
+                        <p className={`text-sm transition-colors duration-300 ${achieved ? (darkMode ? 'text-[rgba(9,203,177,0.823)]' : 'text-green-600') : (darkMode ? 'text-[#888]' : 'text-gray-500')}`}>{achieved ? 'Completed' : 'In Progress'}</p>
+                      </div>
+                      {/* Tooltip on hover */}
+                      <div className="ml-auto relative">
+                        <div className="hidden group-hover:block absolute left-full top-1/2 z-10 -translate-y-1/2 ml-2 bg-white dark:bg-[#222] text-gray-800 dark:text-white text-xs rounded shadow-lg px-3 py-2 w-56 border border-gray-200 dark:border-[#444] whitespace-normal">
+                          {description}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
-              </div>
-            ))}
+              );
+            })()}
           </div>
         </div>
       </div>

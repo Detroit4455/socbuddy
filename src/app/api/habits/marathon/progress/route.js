@@ -58,12 +58,16 @@ export async function GET(req) {
     // Determine start date
     let startDate;
     if (isOwner) {
-      // Owner: earliest accepted startDate
+      // Owner: earliest accepted startDate, or fallback to marathon creation date or today
       const accepted = sessionObj.requested.filter(r => r.status === 'accepted' && r.startDate);
       if (!accepted.length) {
-        return NextResponse.json({ error: "Marathon not started yet - no accepted invitations" }, { status: 400 });
+        // No accepted invitations, use marathon creation date or today
+        startDate = sessionObj.createdAt
+          ? new Date(sessionObj.createdAt).toISOString().split('T')[0]
+          : new Date().toISOString().split('T')[0];
+      } else {
+        startDate = accepted[0].startDate;
       }
-      startDate = accepted[0].startDate;
     } else {
       // Participant: their own startDate
       const invite = sessionObj.requested.find(r => r.to.toString() === userId && r.status === 'accepted');

@@ -33,6 +33,7 @@ export default function HabitTracker() {
   const [notifLoading, setNotifLoading] = useState(false);
   const [showMobileModal, setShowMobileModal] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [previewMounted, setPreviewMounted] = useState(false);
 
   useEffect(() => {
     if (session?.user) {
@@ -131,7 +132,13 @@ export default function HabitTracker() {
 
   const handleAddHabit = async (habit) => {
     setIsSubmitting(true);
-    
+    // Check for duplicate habit name
+    const duplicate = habits.find(h => h.name.trim().toLowerCase() === habit.name.trim().toLowerCase());
+    if (duplicate) {
+      toast.error('You are already part of this habit');
+      setIsSubmitting(false);
+      return;
+    }
     try {
       const response = await fetch('/api/habits', {
         method: 'POST',
@@ -452,6 +459,8 @@ export default function HabitTracker() {
     setIsProfileOpen(false);
   };
 
+  useEffect(() => { setPreviewMounted(true); }, []);
+
   if (isSessionLoading) {
     return (
       <div className={`min-h-screen ${darkMode ? 'bg-[#1e1e1e]' : 'bg-white'} flex items-center justify-center`}>
@@ -462,15 +471,16 @@ export default function HabitTracker() {
 
   if (!session) {
     return (
-      <div className={`min-h-screen ${darkMode ? 'bg-[#1e1e1e]' : 'bg-white'} flex flex-col items-center justify-center p-4`}>
-        <h1 className={`text-2xl font-bold mb-4 ${darkMode ? 'text-white' : 'text-gray-800'}`}>Sign In Required</h1>
-        <p className={`mb-6 text-center ${darkMode ? 'text-[#bbb]' : 'text-gray-600'}`}>Please sign in to access the Habit Tracker.</p>
-        <Link
-          href="/auth/signin"
-          className={`${darkMode ? 'bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)] hover:bg-[rgba(9,203,177,0.3)]' : 'bg-purple-100 text-purple-600 hover:bg-purple-200'} px-6 py-2 rounded-lg transition-all duration-300`}
-        >
-          Sign In
-        </Link>
+      <div className="min-h-screen bg-gradient-to-br from-purple-600 to-purple-400 flex flex-col items-center justify-start p-6">
+        {/* Sign In / Sign Up */}
+        <div className="mt-32 flex flex-col items-center">
+          <h1 className="text-2xl font-bold mb-4 text-white flex items-center space-x-2"><span>🏃‍➡️</span><span>🚶‍♀️‍➡️</span><span>Sign In Required</span></h1>
+          <p className="mb-6 text-center text-white/90">Please sign in to access the Habit Tracker.</p>
+          <div className="flex space-x-4">
+            <Link href="/auth/signin" className="px-6 py-2 bg-white bg-opacity-80 text-purple-700 rounded-lg hover:bg-opacity-100 transition">Sign In</Link>
+            <Link href="/auth/signup" className="px-6 py-2 bg-white bg-opacity-80 text-green-700 rounded-lg hover:bg-opacity-100 transition">Sign Up</Link>
+          </div>
+        </div>
       </div>
     );
   }
@@ -693,7 +703,7 @@ export default function HabitTracker() {
                             : darkMode
                               ? 'border border-[#444] hover:border-[rgba(9,203,177,0.4)]'
                               : 'border border-gray-200 hover:border-purple-300'
-                        }`}
+                        } shadow-md hover:shadow-lg hover:-translate-y-1 transition-transform`}
                       >
                         <div className="flex items-center gap-2">
                           <div className={`h-6 w-6 rounded-full flex items-center justify-center ${darkMode ? 'bg-[#333]' : 'bg-gray-100'}`}>
@@ -774,9 +784,10 @@ export default function HabitTracker() {
                   formatMonthYear={formatMonthYear}
                   formatMonthName={formatMonthName}
                   getCompletionRate={getCompletionRate}
+                  habits={habits}
                 />
-                                </div>
-                                  ) : null}
+              </div>
+            ) : null}
             {/* Mobile: modal popup for main content using HabitDetails */}
             {showMobileModal && selectedHabit && (
               <div className="fixed inset-0 z-50 flex items-start justify-center bg-black bg-opacity-40 md:hidden">
@@ -798,8 +809,9 @@ export default function HabitTracker() {
                       formatMonthYear={formatMonthYear}
                       formatMonthName={formatMonthName}
                       getCompletionRate={getCompletionRate}
+                      habits={habits}
                     />
-                                      </div>
+                  </div>
                 </div>
               </div>
             )}
