@@ -2,24 +2,42 @@
 
 If you're seeing the error "API key not configured" when using the AI Buddy feature, follow these steps to fix it:
 
-## 1. Create or Update Your .env.local File
+## 1. Create or Update Your Environment File
 
-Create a file named `.env.local` in the root directory of your project (same level as package.json) with the following content:
+Create an environment file in the root directory of your project (same level as package.json) based on your environment:
+
+### For Development Environment
+
+Create a file named `.env.development` with:
 
 ```
 OPENAI_API_KEY=your_actual_api_key_here
 ```
 
+### For Production Environment
+
+Create a file named `.env.production` with:
+
+```
+OPENAI_API_KEY=your_actual_api_key_here
+```
+
+You can also use `.env.local` which will override both environments.
+
 Replace `your_actual_api_key_here` with your OpenAI API key from [https://platform.openai.com/api-keys](https://platform.openai.com/api-keys).
 
-## 2. Restart Your Development Server
+## 2. Restart Your Server
 
-After adding the API key, you need to restart your Next.js development server for the changes to take effect:
+After adding the API key, you need to restart your server for the changes to take effect:
 
 1. Stop your current server (usually by pressing `Ctrl+C` in the terminal)
 2. Start it again with:
    ```
+   # For development
    npm run dev
+   
+   # For production
+   npm run start
    ```
 
 ## 3. Common Issues and Solutions
@@ -28,10 +46,20 @@ After adding the API key, you need to restart your Next.js development server fo
 
 Next.js only loads environment variables at startup. If you've added or changed environment variables, you must restart the server.
 
+### Environment File Priority
+
+Next.js loads environment files in this order:
+1. `.env.{environment}.local` (highest priority)
+2. `.env.local`
+3. `.env.{environment}`
+4. `.env` (lowest priority)
+
+Where `{environment}` is either `development` or `production`.
+
 ### Incorrect File Name or Location
 
 Make sure your environment file is:
-- Named exactly `.env.local` (with the dot at the beginning)
+- Named correctly (`.env.development`, `.env.production`, or `.env.local`)
 - Located in the root directory of your project
 - Not inside any subfolder
 

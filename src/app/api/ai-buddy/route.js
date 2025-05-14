@@ -70,13 +70,18 @@ export async function POST(request) {
       // In development, provide a dummy response for testing
       if (process.env.NODE_ENV === 'development') {
         return NextResponse.json({ 
-          response: "This is a development fallback response. Please add OPENAI_API_KEY to your .env.local file and restart the server.",
+          response: `This is a development fallback response. Please add OPENAI_API_KEY to your .env.development file and restart the server.`,
+          isDevFallback: true
+        });
+      } else if (process.env.NODE_ENV === 'production') {
+        return NextResponse.json({ 
+          response: `This is a production fallback response. Please add OPENAI_API_KEY to your .env.production file and restart the server.`,
           isDevFallback: true
         });
       }
       
       return NextResponse.json({ 
-        error: 'API key not configured. Please add OPENAI_API_KEY to your environment variables.' 
+        error: `API key not configured. Please add OPENAI_API_KEY to your .env.${process.env.NODE_ENV || 'development'} file.` 
       }, { status: 500 });
     }
 

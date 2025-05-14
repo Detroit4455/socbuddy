@@ -13,6 +13,10 @@ import { vscDarkPlus, vs } from 'react-syntax-highlighter/dist/esm/styles/prism'
 
 // Add a new component for API key configuration notification
 const ApiKeyNotice = ({ onClose, darkMode }) => {
+  // Get the current environment
+  const environment = typeof window !== 'undefined' ? window.process?.env?.NODE_ENV || 'development' : 'development';
+  const envFile = `.env.${environment}`;
+  
   return (
     <div className={`${darkMode ? 'bg-[#303030]' : 'bg-amber-50'} border-l-4 border-yellow-500 p-4 mb-4 rounded`}>
       <div className="flex">
@@ -26,9 +30,9 @@ const ApiKeyNotice = ({ onClose, darkMode }) => {
           <div className={`mt-2 text-sm ${darkMode ? 'text-[#e0e0e0]' : 'text-gray-700'}`}>
             <p>The OpenAI API key is not configured. To use AI Buddy:</p>
             <ol className="list-decimal pl-5 mt-1 space-y-1">
-              <li>Create a <code className={`${darkMode ? 'bg-[#1a1a1a]' : 'bg-gray-100'} px-1 rounded`}>.env.local</code> file in the project root</li>
+              <li>Create a <code className={`${darkMode ? 'bg-[#1a1a1a]' : 'bg-gray-100'} px-1 rounded`}>{envFile}</code> file in the project root</li>
               <li>Add <code className={`${darkMode ? 'bg-[#1a1a1a]' : 'bg-gray-100'} px-1 rounded`}>OPENAI_API_KEY=your_api_key_here</code></li>
-              <li>Restart the development server</li>
+              <li>Restart the server</li>
             </ol>
             <p className="mt-2">
               <Link href="/api/env-test" target="_blank" className={`${darkMode ? 'text-[rgba(9,203,177,0.823)]' : 'text-purple-600'} hover:underline`}>
