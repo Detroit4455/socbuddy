@@ -46,5 +46,21 @@
     "type": "tool",
     "tags": ["logs", "analysis", "filtering", "troubleshooting", "debugging"],
     "category": "IT Tools"
+  },
+  {
+    "name": "Security Operations Center",
+    "details": "Centralized security monitoring and incident response platform. Track security events, manage incidents, and access threat intelligence in real-time.",
+    "url": "/sec-ops",
+    "type": "tool",
+    "tags": ["security", "monitoring", "incident response", "threat intelligence", "soc"],
+    "category": "Security"
+  },
+  {
+    "name": "AI Security Buddy",
+    "details": "Interactive AI assistant for cybersecurity questions and guidance. Get expert advice on security best practices, threat analysis, and technical explanations powered by advanced AI.",
+    "url": "/ai-buddy",
+    "type": "tool",
+    "tags": ["ai", "assistant", "cybersecurity", "guidance", "learning"],
+    "category": "Security"
   }
 ] 

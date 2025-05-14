@@ -56,7 +56,7 @@ export async function GET(req) {
     console.error("Error fetching users:", error);
     return NextResponse.json({ error: "Failed to fetch users" }, { status: 500 });
   }
-}
+} 
 
 // PUT - Update user details
 export async function PUT(req) {

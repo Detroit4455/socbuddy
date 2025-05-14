@@ -38,6 +38,7 @@ const TodoListManager = () => {
   const [showUrls, setShowUrls] = useState(false);
   const [selectedTask, setSelectedTask] = useState(null);
   const [lastProfileUsed, setLastProfileUsed] = useState('');
+  const [editedTask, setEditedTask] = useState(null); // Store temporary edits
 
   // Update owner field with authenticated username when session is loaded
   useEffect(() => {
@@ -210,7 +211,7 @@ const TodoListManager = () => {
         return (
           task.name.toLowerCase().includes(searchLower) ||
           task.status.toLowerCase().includes(searchLower) ||
-          task.dueDate.includes(searchLower) ||
+          task.startDate.includes(searchLower) ||
           task.owner.toLowerCase().includes(searchLower) ||
           task.detail.toLowerCase().includes(searchLower) ||
           (task.comments && task.comments.some(comment => 
@@ -295,21 +296,33 @@ const TodoListManager = () => {
   };
 
   const handleCellEdit = (index, field, value) => {
-    const updatedTasks = tasks.map((task, idx) => 
-      idx === index ? { ...task, [field]: value } : task
-    );
-    setTasks(updatedTasks);
-    
-    // Debounce the save operation to reduce alerts
-    if (saveTimeout) {
-      clearTimeout(saveTimeout);
+    // If we're in edit mode, update the temporary edited task
+    if (editingTask === index) {
+      if (!editedTask) {
+        // Initialize editedTask with the current task data if it doesn't exist
+        setEditedTask({ ...tasks[index], [field]: value });
+      } else {
+        // Update the field in the temporary edited task
+        setEditedTask({ ...editedTask, [field]: value });
+      }
+    } else {
+      // For non-edit mode changes (like quick edits), use the original behavior
+      const updatedTasks = tasks.map((task, idx) => 
+        idx === index ? { ...task, [field]: value } : task
+      );
+      setTasks(updatedTasks);
+      
+      // Debounce the save operation to reduce alerts
+      if (saveTimeout) {
+        clearTimeout(saveTimeout);
+      }
+      
+      const timeout = setTimeout(() => {
+        saveTasksToStorage(updatedTasks);
+      }, 1000); // Wait 1 second after the last edit before saving
+      
+      setSaveTimeout(timeout);
     }
-    
-    const timeout = setTimeout(() => {
-      saveTasksToStorage(updatedTasks);
-    }, 1000); // Wait 1 second after the last edit before saving
-    
-    setSaveTimeout(timeout);
   };
 
   const toggleEditMode = (index, e) => {
@@ -317,12 +330,29 @@ const TodoListManager = () => {
     
     if (editingTask === index) {
       // If already editing this task, save and exit edit mode
+      if (editedTask) {
+        // Apply the edited changes to the tasks state
+        const updatedTasks = tasks.map((task, idx) => 
+          idx === index ? editedTask : task
+        );
+        setTasks(updatedTasks);
+        
+        // Save the changes
+        saveTasksToStorage(updatedTasks, true);
+        
+        // Clear the edited task
+        setEditedTask(null);
+        
+        // Switch to "All" filter to ensure the user can see their changes
+        setStatusFilter('all');
+      }
       setEditingTask(null);
     } else {
       // Enter edit mode and ensure the details are expanded
       setEditingTask(index);
       setExpandedTask(index);
       setNewComment(''); // Reset new comment when entering edit mode
+      setEditedTask(null); // Reset edited task when entering edit mode
     }
   };
 
@@ -348,6 +378,9 @@ const TodoListManager = () => {
     );
     setTasks(updatedTasks);
     saveTasksToStorage(updatedTasks);
+    
+    // Switch to "All" filter to ensure the user can see their changes
+    setStatusFilter('all');
   };
 
   const addComment = (index) => {
@@ -393,6 +426,9 @@ const TodoListManager = () => {
     
     // Exit comment mode after adding comment
     setCommentingTask(null);
+    
+    // Switch to "All" filter to ensure the user can see their changes
+    setStatusFilter('all');
   };
 
   const saveTasksToStorage = async (updatedTasks, showAlert = true) => {
@@ -578,6 +614,14 @@ const TodoListManager = () => {
     return `${diffDays}d`;
   };
 
+  // Add this function to check if a task is overdue
+  const isTaskOverdue = (dueDate) => {
+    if (!dueDate) return false;
+    const due = new Date(dueDate);
+    const now = new Date();
+    return due < now;
+  };
+
   // Update the extractUrls function
   const extractUrls = (task) => {
     const urlRegex = /(https?:\/\/[^\s]+)|([a-zA-Z0-9-]+\.[a-zA-Z0-9-]+(\.[a-zA-Z]{2,})+([\/\?][^\s]*)?)/g;
@@ -630,6 +674,17 @@ const TodoListManager = () => {
     });
   };
 
+  // Count tasks by status
+  const getTaskCountByStatus = (status) => {
+    // Use the filtered tasks (after date filter is applied)
+    const tasksToCount = filterTasksByDate(tasks, dateFilter);
+    
+    if (status === 'all') {
+      return tasksToCount.length;
+    }
+    return tasksToCount.filter(task => task.status === status).length;
+  };
+
   return (
     <div className="min-h-screen bg-[#121212] py-6 px-2 sm:py-10 sm:px-6 lg:px-8">
       <Navbar />
@@ -637,7 +692,10 @@ const TodoListManager = () => {
       {/* Add Popup to the top level */}
       {popup.show && <Popup message={popup.message} type={popup.type} />}
       
-      <div className="max-w-4xl mx-auto bg-[#1e1e1e] rounded-2xl shadow-lg p-3 sm:p-6 border border-[#444] mt-16">
+      <div className={`max-w-4xl mx-auto bg-[#1e1e1e] rounded-2xl shadow-lg p-3 sm:p-6 border border-[#444] mt-16 ${
+        session?.user?.userProfile === 'personal' ? 'shadow-[0_0_20px_rgba(59,130,246,0.4)] border-[rgba(59,130,246,0.25)]' : 
+        session?.user?.userProfile === 'work' ? 'shadow-[0_0_25px_rgba(9,203,177,0.5)] border-[rgba(9,203,177,0.3)]' : ''
+      }`}>
         {/* Header section - stack on mobile */}
         <div className="flex flex-col sm:flex-row justify-between items-center mb-6 space-y-2 sm:space-y-0">
           <div className="w-full sm:w-1/4 text-center sm:text-left">
@@ -652,12 +710,17 @@ const TodoListManager = () => {
               </p>
             )}
           </div>
-          <h1 className="text-2xl font-semibold text-white w-full sm:w-2/4 text-center">Todo List Manager</h1>
+          <h1 className="text-2xl font-semibold text-white w-full sm:w-2/4 text-center">Task Buddy</h1>
           <div className="w-full sm:w-1/4 flex justify-center sm:justify-end">
             {isGuest && (
               <Link href="/auth/signin?callbackUrl=/todo-list-manager" className="text-yellow-500 hover:underline">
                 Sign in
               </Link>
+            )}
+            {session?.user?.userProfile && (
+              <span className="px-3 py-1 rounded-full text-xs bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)] hover:bg-[rgba(9,203,177,0.25)] transition-all duration-300">
+                {session.user.userProfile}
+              </span>
             )}
           </div>
         </div>
@@ -678,20 +741,24 @@ const TodoListManager = () => {
             placeholder="Task Name"
             className="border border-[#444] bg-[#2a2a2a] text-[#e0e0e0] py-1.5 px-4 rounded focus:outline-none focus:ring-2 focus:ring-[rgba(9,203,177,0.823)]"
           />
-          <input
-            type="date"
-            name="dueDate"
-            value={newTask.dueDate}
-            onChange={handleInputChange}
-            className="border border-[#444] bg-[#2a2a2a] text-[#e0e0e0] py-1.5 px-4 rounded focus:outline-none focus:ring-2 focus:ring-[rgba(9,203,177,0.823)]"
-          />
+          <div className="relative">
+            <label htmlFor="dueDate" className="absolute -top-2 left-2 px-1 bg-[#1e1e1e] text-[rgba(9,203,177,0.823)] text-xs">Due Date</label>
+            <input
+              id="dueDate"
+              type="date"
+              name="dueDate"
+              value={newTask.dueDate}
+              onChange={handleInputChange}
+              className="border border-[#444] bg-[#2a2a2a] text-[#e0e0e0] py-1.5 px-4 rounded focus:outline-none focus:ring-2 focus:ring-[rgba(9,203,177,0.823)] w-full"
+            />
+          </div>
           <div className="col-span-1 sm:col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-2">
             <textarea
               name="detail"
               value={newTask.detail}
               onChange={handleInputChange}
               placeholder="Task Detail"
-              className="col-span-1 sm:col-span-2 border border-[#444] bg-[#2a2a2a] text-[#e0e0e0] py-1.5 px-4 rounded focus:outline-none focus:ring-2 focus:ring-[rgba(9,203,177,0.823)] resize-none"
+              className="col-span-1 sm:col-span-2 border border-[#444] bg-[#2a2a2a] text-[#e0e0e0] py-1.5 px-4 rounded focus:outline-none focus:ring-2 focus:ring-[rgba(9,203,177,0.823)] resize-vertical"
               rows="3"
             />
             <div className="flex flex-row sm:flex-col gap-2">
@@ -714,7 +781,7 @@ const TodoListManager = () => {
         </div>
         
         {/* Filters section - stack on mobile */}
-        <div className="flex flex-col sm:flex-row items-center justify-between mb-4 space-y-2 sm:space-y-0">
+        <div className="flex flex-col sm:flex-row items-center justify-between mb-2 space-y-2 sm:space-y-0">
           <div className="w-full sm:w-auto mb-2 sm:mb-0">
             <select
               value={dateFilter}
@@ -734,67 +801,70 @@ const TodoListManager = () => {
             <div className="flex sm:grid sm:grid-cols-5 min-w-max sm:min-w-0 bg-[#1e1e1e] rounded-lg overflow-hidden border border-[#444]">
               <button
                 onClick={() => setStatusFilter('all')}
-                className={`py-1.5 px-6 transition-all duration-300 ${
+                className={`py-1.5 px-3 text-xs whitespace-nowrap transition-all duration-300 ${
                   statusFilter === 'all'
                   ? 'bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)]'
                   : 'text-[#e0e0e0] hover:bg-[rgba(9,203,177,0.1)] hover:text-[rgba(9,203,177,0.823)]'
                 }`}
               >
-                All
+                All <span className="text-blue-400">({getTaskCountByStatus('all')})</span>
               </button>
               <button
                 onClick={() => setStatusFilter('Pending')}
-                className={`py-1.5 px-6 transition-all duration-300 ${
+                className={`py-1.5 px-3 text-xs whitespace-nowrap transition-all duration-300 ${
                   statusFilter === 'Pending'
                   ? 'bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)]'
                   : 'text-[#e0e0e0] hover:bg-[rgba(9,203,177,0.1)] hover:text-[rgba(9,203,177,0.823)]'
                 }`}
               >
-                Pending
+                Pending <span className="text-blue-400">({getTaskCountByStatus('Pending')})</span>
               </button>
               <button
                 onClick={() => setStatusFilter('In Progress')}
-                className={`py-1.5 px-6 transition-all duration-300 ${
+                className={`py-1.5 px-3 text-xs whitespace-nowrap transition-all duration-300 ${
                   statusFilter === 'In Progress'
                   ? 'bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)]'
                   : 'text-[#e0e0e0] hover:bg-[rgba(9,203,177,0.1)] hover:text-[rgba(9,203,177,0.823)]'
                 }`}
               >
-                In Progress
+                In Progress <span className="text-blue-400">({getTaskCountByStatus('In Progress')})</span>
               </button>
               <button
                 onClick={() => setStatusFilter('Awaiting')}
-                className={`py-1.5 px-6 transition-all duration-300 ${
+                className={`py-1.5 px-3 text-xs whitespace-nowrap transition-all duration-300 ${
                   statusFilter === 'Awaiting'
                   ? 'bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)]'
                   : 'text-[#e0e0e0] hover:bg-[rgba(9,203,177,0.1)] hover:text-[rgba(9,203,177,0.823)]'
                 }`}
               >
-                Awaiting
+                Awaiting <span className="text-blue-400">({getTaskCountByStatus('Awaiting')})</span>
               </button>
               <button
                 onClick={() => setStatusFilter('Completed')}
-                className={`py-1.5 px-6 transition-all duration-300 ${
+                className={`py-1.5 px-3 text-xs whitespace-nowrap transition-all duration-300 ${
                   statusFilter === 'Completed'
                   ? 'bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)]'
                   : 'text-[#e0e0e0] hover:bg-[rgba(9,203,177,0.1)] hover:text-[rgba(9,203,177,0.823)]'
                 }`}
               >
-                Completed
+                Completed <span className="text-blue-400">({getTaskCountByStatus('Completed')})</span>
               </button>
             </div>
           </div>
         </div>
 
-        {/* Search Bar - full width on mobile */}
+        {/* Search Bar - positioned right below filters */}
         <div className="mb-4">
-          <input
-            type="text"
-            value={searchTerm}
-            onChange={handleSearchChange}
-            placeholder="Search tasks..."
-            className="w-full border border-[#444] bg-[#2a2a2a] text-[#e0e0e0] py-1.5 px-4 rounded focus:outline-none focus:ring-2 focus:ring-[rgba(9,203,177,0.823)]"
-          />
+          <div className="bg-[#1e1e1e] rounded-lg border border-[#444] px-2 py-1.5 flex items-center">
+            <input
+              type="text"
+              value={searchTerm}
+              onChange={handleSearchChange}
+              placeholder="Search tasks..."
+              className="w-full bg-transparent text-blue-400 border-none focus:outline-none placeholder-blue-300/50"
+            />
+            <span className="text-[rgba(9,203,177,0.823)] ml-2">🔍</span>
+          </div>
         </div>
 
         {loading ? (
@@ -812,7 +882,7 @@ const TodoListManager = () => {
                   <tr>
                     <th className="py-3 px-4 text-[rgba(9,203,177,0.823)] whitespace-nowrap">Task Name</th>
                     <th className="py-3 px-4 text-[rgba(9,203,177,0.823)] whitespace-nowrap">Status</th>
-                    <th className="py-3 px-4 text-[rgba(9,203,177,0.823)] whitespace-nowrap">Due Date</th>
+                    <th className="py-3 px-4 text-[rgba(9,203,177,0.823)] whitespace-nowrap">Open since</th>
                     <th className="py-3 px-4 text-[rgba(9,203,177,0.823)] whitespace-nowrap">Owner</th>
                     <th className="py-3 px-4 text-[rgba(9,203,177,0.823)] whitespace-nowrap">Actions</th>
                   </tr>
@@ -829,14 +899,14 @@ const TodoListManager = () => {
                     return (
                       <React.Fragment key={index}>
                         <tr 
-                          className={`border-b border-[#444] hover:bg-[#2a2a2a] cursor-pointer ${expandedTask === originalIndex ? 'bg-[#2a2a2a]' : ''}`}
+                          className={`border-b border-[#444] hover:bg-[#2a2a2a] cursor-pointer ${expandedTask === originalIndex ? 'bg-[#232323] border-l-4 border-l-[rgba(9,203,177,0.823)]' : ''}`}
                           onClick={() => toggleExpand(originalIndex)}
                         >
                           <td className="py-2 px-4 text-[#e0e0e0]">
                             {editingTask === originalIndex ? (
                               <input
                                 type="text"
-                                value={task.name}
+                                value={(editedTask && editingTask === originalIndex) ? editedTask.name : task.name}
                                 onChange={(e) => handleCellEdit(originalIndex, 'name', e.target.value)}
                                 className="w-full bg-[#2a2a2a] text-[#e0e0e0] p-1 rounded border border-[#444]"
                                 onClick={(e) => e.stopPropagation()}
@@ -853,7 +923,7 @@ const TodoListManager = () => {
                           <td className={`py-2 px-4 font-semibold ${getStatusColor(task.status)}`}>
                             {editingTask === originalIndex ? (
                               <select
-                                value={task.status}
+                                value={(editedTask && editingTask === originalIndex) ? editedTask.status : task.status}
                                 onChange={(e) => handleCellEdit(originalIndex, 'status', e.target.value)}
                                 className="bg-[#2a2a2a] text-[#e0e0e0] p-1 rounded border border-[#444]"
                                 onClick={(e) => e.stopPropagation()}
@@ -867,17 +937,21 @@ const TodoListManager = () => {
                             )}
                           </td>
                           <td className="py-2 px-4 text-[#e0e0e0]">
-                            {editingTask === originalIndex ? (
-                              <input
-                                type="date"
-                                value={task.dueDate}
-                                onChange={(e) => handleCellEdit(originalIndex, 'dueDate', e.target.value)}
-                                className="bg-[#2a2a2a] text-[#e0e0e0] p-1 rounded border border-[#444]"
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            ) : (
-                              formatDateShort(task.dueDate)
-                            )}
+                            <div className="flex items-center">
+                              <span>{calculateDaysSince(task.startDate)}</span>
+                              {editingTask === originalIndex && editedTask ? 
+                                (isTaskOverdue(editedTask.dueDate) && (
+                                  <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-red-500/20 text-red-300">
+                                    overdue
+                                  </span>
+                                )) : 
+                                (isTaskOverdue(task.dueDate) && (
+                                  <span className="ml-2 px-2 py-0.5 text-xs rounded-full bg-red-500/20 text-red-300">
+                                    overdue
+                                  </span>
+                                ))
+                              }
+                            </div>
                           </td>
                           <td className="py-2 px-4 text-[#e0e0e0]">
                             {task.owner}
@@ -886,13 +960,23 @@ const TodoListManager = () => {
                             <div className="flex space-x-2">
                               {!isGuest ? (
                                 <>
-                                  <button
-                                    onClick={(e) => toggleEditMode(originalIndex, e)}
-                                    className="text-[rgba(9,203,177,0.823)] hover:text-[#00ff9d] transition-colors duration-300"
-                                    title="Edit Task"
-                                  >
-                                    {editingTask === originalIndex ? '✓' : '✎'}
-                                  </button>
+                                  {editingTask === originalIndex ? (
+                                    <button
+                                      onClick={(e) => toggleEditMode(originalIndex, e)}
+                                      className="px-3 py-1 rounded-full text-xs bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)] hover:bg-[rgba(9,203,177,0.25)] transition-all duration-300 flex items-center"
+                                      title="Save Changes"
+                                    >
+                                      <span className="mr-1">Save</span>
+                                    </button>
+                                  ) : (
+                                    <button
+                                      onClick={(e) => toggleEditMode(originalIndex, e)}
+                                      className="text-[rgba(9,203,177,0.823)] hover:text-[#00ff9d] transition-colors duration-300"
+                                      title="Edit Task"
+                                    >
+                                      ✎
+                                    </button>
+                                  )}
                                   <button
                                     onClick={(e) => toggleCommentMode(originalIndex, e)}
                                     className={`text-[rgba(9,203,177,0.823)] hover:text-[#00ff9d] transition-colors duration-300 ${commentingTask === originalIndex ? 'text-[#00ff9d]' : ''}`}
@@ -915,34 +999,36 @@ const TodoListManager = () => {
                           </td>
                         </tr>
                         {expandedTask === originalIndex && (
-                          <tr className="bg-[#2a2a2a]">
-                            <td colSpan="5" className="py-2 px-4 text-[#bbb]">
+                          <tr className="bg-[#232323]">
+                            <td colSpan="5" className="py-2 px-4 text-[#bbb] shadow-inner shadow-[0_4px_12px_rgba(9,203,177,0.2)] relative z-10 transform transition-all duration-300 border border-black rounded-lg" style={{boxShadow: "0 4px 20px rgba(9,203,177,0.15), inset 0 2px 10px rgba(0,0,0,0.3)"}}>
+                              {editingTask === originalIndex && (
+                                <div className="mb-3 p-2 bg-[rgba(9,203,177,0.1)] border border-[rgba(9,203,177,0.3)] rounded-lg">
+                                  <div className="flex items-center">
+                                    <span className="text-[rgba(9,203,177,0.823)] text-sm">Editing mode - make your changes and click Save when done</span>
+                                  </div>
+                                </div>
+                              )}
                               {/* Task Details Capsules */}
                               <div className="flex flex-wrap gap-2 mb-4">
                                 <span className="px-3 py-1.5 rounded-full text-xs bg-[#333] text-[#e0e0e0] hover:bg-[#444] transition-all duration-300">
                                   Start: {formatDate(task.startDate)}
                                 </span>
-                                <span className="px-3 py-1.5 rounded-full text-xs bg-[#333] text-[#e0e0e0] hover:bg-[#444] transition-all duration-300">
-                                  Due: {formatDateShort(task.dueDate)}
-                                </span>
-                                <span className="px-3 py-1.5 rounded-full text-xs bg-[#333] text-[#e0e0e0] hover:bg-[#444] transition-all duration-300">
-                                  Owner: {task.owner}
-                                </span>
-                                <span className="px-3 py-1.5 rounded-full text-xs bg-[#333] text-[#e0e0e0] hover:bg-[#444] transition-all duration-300">
-                                  Status: <span className={getStatusColor(task.status)}>{task.status}</span>
-                                </span>
-                                <span className="px-3 py-1.5 rounded-full text-xs bg-[#333] text-[#e0e0e0] hover:bg-[#444] transition-all duration-300">
-                                  Open since: {calculateDaysSince(task.startDate)}
-                                </span>
-                                {task.profile_used ? (
-                                  <span className="px-3 py-1.5 rounded-full text-xs bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)] hover:bg-[rgba(9,203,177,0.25)] transition-all duration-300">
-                                    {task.profile_used}
+                                {editingTask === originalIndex ? (
+                                  <div className="relative px-3 py-1 rounded-full text-xs bg-[#333] text-[#e0e0e0] hover:bg-[#444] transition-all duration-300">
+                                    <span className="mr-2">Due:</span>
+                                    <input
+                                      type="date"
+                                      value={(editedTask && editingTask === originalIndex) ? editedTask.dueDate : task.dueDate}
+                                      onChange={(e) => handleCellEdit(originalIndex, 'dueDate', e.target.value)}
+                                      className="bg-[#2a2a2a] text-[#e0e0e0] px-2 py-0.5 rounded border border-[#444] text-xs"
+                                      onClick={(e) => e.stopPropagation()}
+                                    />
+                                  </div>
+                                ) : (
+                                  <span className="px-3 py-1.5 rounded-full text-xs bg-[#333] text-[#e0e0e0] hover:bg-[#444] transition-all duration-300">
+                                    Due: {formatDateShort(task.dueDate)}
                                   </span>
-                                ) : task.userProfile ? (
-                                  <span className="px-3 py-1.5 rounded-full text-xs bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)] hover:bg-[rgba(9,203,177,0.25)] transition-all duration-300">
-                                    {task.userProfile} profile
-                                  </span>
-                                ) : null}
+                                )}
                                 <button
                                   onClick={() => {
                                     setSelectedTask(task);
@@ -978,7 +1064,7 @@ const TodoListManager = () => {
                                         ✕
                                       </button>
                                     </div>
-                                    <div className="font-mono text-sm text-[#e0e0e0] whitespace-pre-wrap">
+                                    <div className="font-mono text-sm text-[#e0e0e0] whitespace-pre-wrap bg-[#2a2a2a] p-4 rounded border border-[#444] min-h-[200px] max-h-[500px] overflow-y-auto">
                                       {task.detail}
                                     </div>
                                   </div>
@@ -1074,14 +1160,14 @@ const TodoListManager = () => {
                                 <h3 className="text-[rgba(9,203,177,0.823)] font-semibold mb-2">Details</h3>
                                 {editingTask === originalIndex ? (
                                   <textarea
-                                    value={task.detail}
+                                    value={(editedTask && editingTask === originalIndex) ? editedTask.detail : task.detail}
                                     onChange={(e) => handleCellEdit(originalIndex, 'detail', e.target.value)}
-                                    className="w-full bg-[#2a2a2a] text-[#e0e0e0] p-2 rounded border border-[#444] resize-none"
-                                    rows="3"
+                                    className="w-full bg-[#2a2a2a] text-[#e0e0e0] p-2 rounded border border-[#444] resize-vertical min-h-[100px]"
+                                    rows="5"
                                     onClick={(e) => e.stopPropagation()}
                                   />
                                 ) : (
-                                  <div className="whitespace-pre-line">
+                                  <div className="whitespace-pre-wrap bg-[#2a2a2a] text-[#e0e0e0] p-2 rounded border border-[#444] min-h-[100px] max-h-[300px] overflow-y-auto resize-vertical" style={{resize: 'vertical'}}>
                                     {task.detail}
                                   </div>
                                 )}

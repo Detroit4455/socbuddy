@@ -6,7 +6,7 @@ const ThemeToggle = ({ darkMode, toggleDarkMode }) => {
   return (
     <button
       onClick={toggleDarkMode}
-      className="p-2 rounded-lg transition-colors"
+      className={`p-2 rounded-lg transition-colors ${darkMode ? 'hover:bg-[#333]' : 'hover:bg-gray-100'}`}
       title={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
       aria-label={darkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
     >
@@ -17,7 +17,7 @@ const ThemeToggle = ({ darkMode, toggleDarkMode }) => {
         </svg>
       ) : (
         // Moon icon for dark mode
-        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-700" viewBox="0 0 20 20" fill="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-gray-600" viewBox="0 0 20 20" fill="currentColor">
           <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z" />
         </svg>
       )}

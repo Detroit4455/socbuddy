@@ -34,6 +34,8 @@ export default function HabitTracker() {
   const [showMobileModal, setShowMobileModal] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [previewMounted, setPreviewMounted] = useState(false);
+  const [isDeletingNotifications, setIsDeletingNotifications] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     if (session?.user) {
@@ -76,17 +78,51 @@ export default function HabitTracker() {
   const fetchNotifications = async () => {
     if (!session?.user) return;
     setNotifLoading(true);
+    console.log("🔔 Fetching notifications for user:", session?.user?.id);
     try {
-      const res = await fetch('/api/habits/marathon?status=pending');
-      if (res.ok) {
-        const data = await res.json();
-        const pending = data.filter(inv => inv.status === 'pending');
-        setNotifications(pending);
+      // Fetch marathon invitations
+      const invitationsRes = await fetch('/api/habits/marathon?status=pending');
+      let pendingInvitations = [];
+      if (invitationsRes.ok) {
+        const data = await invitationsRes.json();
+        pendingInvitations = data.filter(inv => inv.status === 'pending').map(inv => ({
+          ...inv,
+          notificationType: 'invitation'
+        }));
+        console.log("🔔 Fetched pending marathon invitations:", pendingInvitations.length);
       } else {
-        console.error('Error fetching notifications:', res.statusText);
+        console.error("🔔 Error fetching marathon invitations:", await invitationsRes.text());
       }
+
+      // Fetch marathon completion notifications
+      console.log("🔔 Fetching marathon completion notifications...");
+      const notificationsRes = await fetch('/api/notifications?type=marathon-completion&read=false');
+      let completionNotifications = [];
+      if (notificationsRes.ok) {
+        completionNotifications = await notificationsRes.json();
+        console.log("🔔 Fetched completion notifications:", completionNotifications.length);
+        console.log("🔔 Completion notifications:", completionNotifications);
+        
+        // Transform format to match what the component expects
+        completionNotifications = completionNotifications.map(notif => ({
+          marathonId: notif.marathonId,
+          name: notif.habitName,
+          message: notif.message,
+          notificationType: 'completion',
+          _id: notif._id, // Keep the notification ID for marking as read
+          senderId: notif.senderId,
+          senderName: notif.senderName
+        }));
+      } else {
+        console.error("🔔 Error fetching completion notifications:", await notificationsRes.text());
+      }
+
+      // Combine both types of notifications
+      const allNotifications = [...pendingInvitations, ...completionNotifications];
+      console.log("🔔 Total notifications:", allNotifications.length);
+      setNotifications(allNotifications);
     } catch (err) {
-      console.error('Error fetching notifications', err);
+      console.error('🔔 Error fetching notifications', err);
     } finally {
       setNotifLoading(false);
     }
@@ -95,6 +131,36 @@ export default function HabitTracker() {
   useEffect(() => {
     fetchNotifications();
   }, [session]);
+
+  // Mark notification as read
+  const markNotificationAsRead = async (notificationId) => {
+    try {
+      await fetch('/api/notifications', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ 
+          notificationIds: [notificationId]
+        }),
+      });
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+    }
+  };
+
+  // Handle notification click
+  const handleNotificationClick = (notification) => {
+    if (notification.notificationType === 'invitation') {
+      router.push('/habit-marathon');
+    } else if (notification.notificationType === 'completion') {
+      // Mark as read when clicked
+      if (notification._id) {
+        markNotificationAsRead(notification._id);
+      }
+    }
+    setShowNotifications(false);
+  };
 
   const toggleDarkMode = () => {
     setDarkMode(!darkMode);
@@ -196,6 +262,9 @@ export default function HabitTracker() {
 
   const handleTrackHabit = async (habitId, date) => {
     try {
+      console.log("✅ Tracking habit:", habitId);
+      console.log("✅ Date:", date);
+      
       // Check if the date is current day or previous day
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -207,6 +276,7 @@ export default function HabitTracker() {
       selectedDate.setHours(0, 0, 0, 0);
       
       if (selectedDate.getTime() !== today.getTime() && selectedDate.getTime() !== yesterday.getTime()) {
+        console.log("✅ Invalid date - not today or yesterday");
         toast.error("You can only track habits for today and yesterday");
         return;
       }
@@ -214,6 +284,7 @@ export default function HabitTracker() {
       // Find if the habit is already completed for this date
       const habit = habits.find(h => h._id === habitId);
       if (!habit) {
+        console.log("✅ Habit not found");
         toast.error("Habit not found");
         return;
       }
@@ -221,7 +292,11 @@ export default function HabitTracker() {
       // Check if entry already exists and its completed status
       const existingEntry = (habit.streakData || []).find(entry => entry.date === date);
       const completed = existingEntry ? !existingEntry.completed : true;
+      console.log("✅ Setting completed status to:", completed);
+      console.log("✅ Existing entry:", existingEntry);
+      console.log("✅ Habit marathons:", habit.marathons);
       
+      console.log("✅ Sending API request to track habit...");
       const response = await fetch('/api/habits/track', {
         method: 'POST',
         headers: {
@@ -231,14 +306,20 @@ export default function HabitTracker() {
       });
 
       if (!response.ok) {
+        const errorText = await response.text();
+        console.error("✅ API error:", errorText);
         throw new Error('Failed to track habit');
       }
+      
+      const result = await response.json();
+      console.log("✅ Habit tracking result:", result);
 
       loadHabits();
       loadStats();
+      fetchNotifications(); // Add this to refresh notifications after tracking a habit
       toast.success('Habit tracked successfully!');
     } catch (error) {
-      console.error('Error tracking habit:', error);
+      console.error('✅ Error tracking habit:', error);
       toast.error('Error tracking habit');
     }
   };
@@ -427,6 +508,22 @@ export default function HabitTracker() {
     return habit?.longestStreak || 0;
   };
 
+  // Calculate total completed days across all habits
+  const getTotalCompletedDays = () => {
+    if (!habits || habits.length === 0) return 0;
+    
+    // Count the total number of completed days across all habits
+    let totalDays = 0;
+    habits.forEach(habit => {
+      if (habit.streakData) {
+        const completedDays = habit.streakData.filter(entry => entry.completed).length;
+        totalDays += completedDays;
+      }
+    });
+    
+    return totalDays;
+  };
+
   // Handle Marathon button click: redirect based on invitation status
   const handleMarathonClick = async () => {
     try {
@@ -446,11 +543,7 @@ export default function HabitTracker() {
 
   // Toggle notification panel and clear notifications when read
   const handleBellClick = () => {
-    setShowNotifications(prev => {
-      const newShow = !prev;
-      if (newShow) fetchNotifications();
-      return newShow;
-    });
+    setShowNotifications(!showNotifications);
   };
 
   const handleSignOut = async () => {
@@ -460,6 +553,44 @@ export default function HabitTracker() {
   };
 
   useEffect(() => { setPreviewMounted(true); }, []);
+
+  // Add function to handle clearing all notifications
+  const handleClearAllNotifications = async () => {
+    if (notifications.length === 0) return;
+    
+    try {
+      setIsDeletingNotifications(true);
+      
+      // Delete all notifications directly in one step
+      const deleteResponse = await fetch('/api/notifications', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          allNotifications: true
+        }),
+      });
+      
+      if (!deleteResponse.ok) {
+        const errorData = await deleteResponse.json();
+        console.error('Error response:', errorData);
+        throw new Error('Failed to delete notifications');
+      }
+      
+      // Clear the local notifications state
+      setNotifications([]);
+      toast.success('All notifications cleared');
+      
+      // Close the notification dropdown
+      setShowNotifications(false);
+    } catch (error) {
+      console.error('Error clearing notifications:', error);
+      toast.error('Failed to clear notifications');
+    } finally {
+      setIsDeletingNotifications(false);
+    }
+  };
 
   if (isSessionLoading) {
     return (
@@ -520,22 +651,28 @@ export default function HabitTracker() {
             <div className="flex items-center justify-between w-full sm:w-auto space-x-1">
               <h1 className="text-xl font-semibold">Habit Tracker</h1>
               <div className="flex items-center sm:hidden space-x-1">
-                {/* Mobile-only Marathon button */}
-                <button
-                  onClick={handleMarathonClick}
-                  className="px-2 py-1 text-sm rounded-md bg-purple-50 hover:bg-purple-100 text-purple-600"
+                {/* Mobile-only hamburger menu button */}
+                <button 
+                  onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                  className={`p-1 rounded-md ${darkMode ? 'text-white hover:bg-[#444]' : 'text-gray-800 hover:bg-gray-100'}`}
                 >
-                  <span className="inline-block animate-bounce">🏃‍➡️</span> Marathon
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16m-7 6h7" />
+                  </svg>
                 </button>
-                {/* Mobile-only Stats link - moved directly after Marathon */}
-                <Link
-                  href="/habit-tracker/stats"
-                  className="px-2 py-1 text-sm rounded-md bg-purple-100 hover:bg-purple-200 text-purple-600"
-                >
-                  Stats
-                </Link>
+                
+                {/* Mobile Overall Run KM display */}
+                <div className={`flex items-center justify-center px-2 py-1 rounded-md ${
+                  darkMode 
+                    ? 'bg-[rgba(9,203,177,0.1)] text-[rgba(9,203,177,0.823)] border border-[rgba(9,203,177,0.3)]' 
+                    : 'bg-purple-50 text-purple-600 border border-purple-200'
+                }`}>
+                  <span className="text-xs font-medium">Journey: {getTotalCompletedDays()} KM</span>
+                </div>
+                
                 {/* Mobile-only theme toggle */}
                 <ThemeToggle darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+                
                 {/* Mobile-only notification bell with dropdown */}
                 <div className="relative">
                   <button onClick={handleBellClick} className="text-xl">
@@ -555,33 +692,127 @@ export default function HabitTracker() {
                             <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.372 0 0 5.372 0 12h4z" />
                           </svg>
                           Loading...
-              </div>
+                        </div>
                       ) : (
-                        <ul className="max-h-48 overflow-y-auto">
-                          {notifications.length > 0 ? (
-                            notifications.map(inv => (
-                              <li key={inv.marathonId}>
-                                <button
-                                  onClick={() => { router.push('/habit-marathon'); setShowNotifications(false); }}
-                                  className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-[#3a3a3a] text-gray-900 dark:text-gray-200"
-                                >
-                                  Invitation to join "{inv.name}" marathon
-                                </button>
+                        <div>
+                          <div className="sticky top-0 bg-purple-100 dark:bg-[#333] px-4 py-1 flex justify-between items-center">
+                            <span className="text-sm text-purple-800 dark:text-gray-200 font-medium">
+                              Notifications ({notifications.length})
+                            </span>
+                            {notifications.length > 0 && (
+                              <button
+                                onClick={handleClearAllNotifications}
+                                disabled={isDeletingNotifications}
+                                className="text-xs text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 disabled:opacity-50"
+                              >
+                                {isDeletingNotifications ? 'Clearing...' : 'Clear All'}
+                              </button>
+                            )}
+                          </div>
+                          <ul className="max-h-64 overflow-y-auto">
+                            {notifications.length > 0 ? (
+                              notifications.map(notif => (
+                                <li key={notif.notificationType === 'invitation' ? notif.marathonId : notif._id} 
+                                    className="border-b last:border-b-0 border-gray-100 dark:border-[#444]">
+                                  <button
+                                    onClick={() => handleNotificationClick(notif)}
+                                    className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-[#3a3a3a] text-gray-900 dark:text-gray-200"
+                                  >
+                                    {notif.notificationType === 'invitation' ? (
+                                      <div>
+                                        <div className="font-semibold">Marathon Invitation</div>
+                                        <div className="text-sm truncate">"{notif.name}" marathon</div>
+                                      </div>
+                                    ) : (
+                                      <div>
+                                        <div className="font-semibold">Habit Completed</div>
+                                        <div className="text-xs text-gray-500 dark:text-gray-400">{notif.senderName}</div>
+                                        <div className="text-sm">{notif.message}</div>
+                                      </div>
+                                    )}
+                                  </button>
+                                </li>
+                              ))
+                            ) : (
+                              <li className="px-4 py-2 text-center text-sm text-gray-500 dark:text-gray-400">
+                                No notifications
                               </li>
-                            ))
-                          ) : (
-                            <li className="px-4 py-2 text-center text-sm text-gray-900 dark:text-gray-200">
-                              No notifications
-                            </li>
+                            )}
+                          </ul>
+                          {notifications.length > 0 && (
+                            <div className="p-2 border-t border-gray-100 dark:border-[#444]">
+                              <button
+                                onClick={() => fetchNotifications()}
+                                className="w-full text-center text-xs text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300"
+                              >
+                                Refresh
+                              </button>
+                            </div>
                           )}
-                        </ul>
+                        </div>
                       )}
-            </div>
+                    </div>
                   )}
                 </div>
               </div>
             </div>
+            
+            {/* Mobile menu dropdown */}
+            {isMobileMenuOpen && (
+              <div className="sm:hidden w-full mt-2 bg-white dark:bg-[#2a2a2a] rounded-lg shadow-lg border border-gray-200 dark:border-[#444] z-50">
+                <div className="py-2">
+                  <Link
+                    href="/habit-tracker/stats"
+                    className="block px-4 py-2 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-[#333]"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Stats
+                  </Link>
+                  <Link
+                    href="/habit-tracker/manage"
+                    className="block px-4 py-2 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-[#333]"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Manage
+                  </Link>
+                  <Link
+                    href="/habit-tracker/public-marathon"
+                    className="block px-4 py-2 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-[#333]"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    <span className="inline-block mr-1">🏃‍➡️</span>
+                    Public Marathon
+                  </Link>
+                  <Link
+                    href="/profile"
+                    className="block px-4 py-2 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-[#333]"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  >
+                    Profile
+                  </Link>
+                  <button
+                    onClick={() => {
+                      handleSignOut();
+                      setIsMobileMenuOpen(false);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-gray-800 dark:text-white hover:bg-gray-100 dark:hover:bg-[#333]"
+                  >
+                    Sign Out
+                  </button>
+                </div>
+              </div>
+            )}
+            
             <div className="hidden sm:flex flex-wrap gap-2 items-center ml-auto justify-end w-full sm:w-auto">
+              {/* Overall Run KM display */}
+              <div className={`flex items-center justify-center px-3 py-1 rounded-md ${
+                darkMode 
+                  ? 'bg-[rgba(9,203,177,0.1)] text-[rgba(9,203,177,0.823)] border border-[rgba(9,203,177,0.3)]' 
+                  : 'bg-purple-50 text-purple-600 border border-purple-200'
+              }`}>
+                <span className="text-sm font-medium">Habit Journey: {getTotalCompletedDays()} KM</span>
+              </div>
+              
               {/* Profile dropdown */}
               <div className="relative">
                 <button
@@ -621,17 +852,62 @@ export default function HabitTracker() {
                         Loading...
                       </div>
                     ) : (
-                      <ul className="max-h-48 overflow-y-auto">
-                        {notifications.length > 0 ? notifications.map(inv => (
-                          <li key={inv.marathonId}>
-                            <button onClick={() => { router.push('/habit-marathon'); setShowNotifications(false); }} className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-[#3a3a3a] text-gray-900 dark:text-gray-200">
-                              Invitation to join "{inv.name}" marathon
+                      <div>
+                        <div className="sticky top-0 bg-purple-100 dark:bg-[#333] px-4 py-1 flex justify-between items-center">
+                          <span className="text-sm text-purple-800 dark:text-gray-200 font-medium">
+                            Notifications ({notifications.length})
+                          </span>
+                          {notifications.length > 0 && (
+                            <button
+                              onClick={handleClearAllNotifications}
+                              disabled={isDeletingNotifications}
+                              className="text-xs text-red-500 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 disabled:opacity-50"
+                            >
+                              {isDeletingNotifications ? 'Clearing...' : 'Clear All'}
                             </button>
-                          </li>
-                        )) : (
-                          <li className="px-4 py-2 text-center text-sm text-gray-900 dark:text-gray-200">No notifications</li>
+                          )}
+                        </div>
+                        <ul className="max-h-64 overflow-y-auto">
+                          {notifications.length > 0 ? (
+                            notifications.map(notif => (
+                              <li key={notif.notificationType === 'invitation' ? notif.marathonId : notif._id} 
+                                  className="border-b last:border-b-0 border-gray-100 dark:border-[#444]">
+                                <button
+                                  onClick={() => handleNotificationClick(notif)}
+                                  className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-[#3a3a3a] text-gray-900 dark:text-gray-200"
+                                >
+                                  {notif.notificationType === 'invitation' ? (
+                                    <div>
+                                      <div className="font-semibold">Marathon Invitation</div>
+                                      <div className="text-sm truncate">"{notif.name}" marathon</div>
+                                    </div>
+                                  ) : (
+                                    <div>
+                                      <div className="font-semibold">Habit Completed</div>
+                                      <div className="text-xs text-gray-500 dark:text-gray-400">{notif.senderName}</div>
+                                      <div className="text-sm">{notif.message}</div>
+                                    </div>
+                                  )}
+                                </button>
+                              </li>
+                            ))
+                          ) : (
+                            <li className="px-4 py-2 text-center text-sm text-gray-500 dark:text-gray-400">
+                              No notifications
+                            </li>
+                          )}
+                        </ul>
+                        {notifications.length > 0 && (
+                          <div className="p-2 border-t border-gray-100 dark:border-[#444]">
+                            <button
+                              onClick={() => fetchNotifications()}
+                              className="w-full text-center text-xs text-purple-600 dark:text-purple-400 hover:text-purple-800 dark:hover:text-purple-300"
+                            >
+                              Refresh
+                            </button>
+                          </div>
                         )}
-                      </ul>
+                      </div>
                     )}
                   </div>
                 )}
@@ -650,20 +926,17 @@ export default function HabitTracker() {
               >
                 Manage
               </Link>
-              <button
-                onClick={handleMarathonClick}
+              <Link 
+                href="/habit-tracker/public-marathon" 
                 className={`hidden sm:inline-flex px-3 py-1 text-sm rounded-md ${
                   darkMode 
                     ? 'bg-[rgba(9,203,177,0.1)] hover:bg-[rgba(9,203,177,0.2)] text-[rgba(9,203,177,0.823)]'
                     : 'bg-purple-50 hover:bg-purple-100 text-purple-600'
                 }`}
               >
-                <span className="inline-block animate-bounce">🏃‍➡️</span> Marathon
-              </button>
-            </div>
-            {/* Mobile-only greeting below capsules */}
-            <div className="flex w-full items-center justify-end sm:hidden">
-              <span className="text-sm font-medium">Hello, {session?.user?.username}</span>
+                <span className="inline-block animate-bounce mr-1">🏃‍➡️</span>
+                Public Marathon
+              </Link>
             </div>
           </div>
         </div>

@@ -39,6 +39,8 @@ This is a comprehensive web tools application built with Next.js that provides m
 - Sort by name or type
 - Card design displaying website details with favicons
 - Interactive grid layout optimized for desktop and mobile
+- Admin interface for managing resources
+- Bulk import of resources via JSON
 
 ### Log Analyzer
 - Advanced log analysis with support for multiple file formats:
@@ -83,12 +85,17 @@ This is a comprehensive web tools application built with Next.js that provides m
     - Full-text search functionality
     - Log entry filtering
   - Organized log display with refresh capability
+- Cybersecurity resources management:
+  - Add, edit, and delete resources
+  - Bulk import resources via JSON
+  - Search and filter resources
 
 ## Technical Features
 
 ### Persistence
 - Analytics data persists across server restarts using file-based storage
 - User input logs are stored in a dedicated log file
+- Cybersecurity resources stored in MongoDB database
 
 ### Security
 - Admin access is password protected
@@ -138,6 +145,7 @@ No environment variables are required for basic functionality. The application w
 
 - **Frontend**: Next.js, React, TailwindCSS
 - **Backend**: Next.js API Routes
+- **Database**: MongoDB for storing resources
 - **OCR Processing**: Tesseract.js
 - **Data Persistence**: File-based storage with localStorage for user preferences and templates
 - **Logging**: Custom logging system with filesystem storage
@@ -157,6 +165,8 @@ No environment variables are required for basic functionality. The application w
     - `/sample-logs.js`: Sample logs for testing
     - `/__tests__`: Unit and component tests
   - `/administrator`: Administrator dashboard
+  - `/admin`: Admin panel
+    - `/cyber-resources`: Cybersecurity resources management
   - `/api`: API endpoints
     - `/grab-url`: Handles URL redirect tracking
     - `/fetch-url`: Fetches content from external URLs
@@ -164,13 +174,55 @@ No environment variables are required for basic functionality. The application w
     - `/page-analytics`: Tracks and provides page view statistics
     - `/user-logs`: Provides access to stored user logs
     - `/process-image`: Handles image processing (placeholder)
+    - `/cyber-resources`: API for managing cybersecurity resources
   - `/components`: Reusable components
     - `/PageTracker`: Tracks page views across the site
   - `/utils`: Utility functions
     - `/logger.js`: Functions for logging user activity
+  - `/models`: Database models
+    - `/CyberResource.js`: Model for cybersecurity resources
 - `/middleware.js`: Middleware for IP tracking and request processing
 - `/public/data`: Data files
   - `/website.json`: Collection of cybersecurity websites and resources
+- `/scripts`: Utility scripts
+  - `/migrate-cyber-resources.js`: Script to migrate resources from JSON to MongoDB
+
+## Cybersecurity Resources Management
+
+### Bulk Import Format
+
+Resources can be bulk imported using the following JSON format:
+
+```json
+[
+  {
+    "name": "Cybersecurity & Infrastructure Security Agency",
+    "details": "U.S. federal agency responsible for improving cybersecurity across all levels of government and critical infrastructure.",
+    "url": "https://www.cisa.gov/",
+    "type": "Government",
+    "tags": ["threat advisories", "critical infrastructure", "federal"],
+    "category": "Organizations"
+  },
+  {
+    "name": "SecTools.org",
+    "details": "Top network security tools curated by Nmap.",
+    "url": "https://sectools.org/",
+    "type": "Security Tool",
+    "tags": ["tools list", "network security", "popular tools"],
+    "category": "Resources"
+  }
+]
+```
+
+### Data Migration
+
+To migrate existing data from the JSON file to the database, run:
+
+```bash
+npm run migrate:cyber-resources
+```
+
+This will import resources from `public/data/website.json` into the MongoDB database.
 
 ## License
 

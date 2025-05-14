@@ -1,6 +1,11 @@
 const mongoose = require('mongoose');
 const bcrypt = require('bcryptjs');
 
+// Clear the existing model to ensure schema changes are applied
+if (mongoose.models.User) {
+  delete mongoose.models.User;
+}
+
 const userSchema = new mongoose.Schema({
   username: {
     type: String,
@@ -25,7 +30,8 @@ const userSchema = new mongoose.Schema({
   },
   role: {
     type: String,
-    enum: ['user', 'admin'],
+    // Note: We're not using enum here to allow dynamic roles
+    // The validation will be done at the application level
     default: 'user'
   },
   userProfile: {
@@ -61,6 +67,6 @@ userSchema.methods.comparePassword = async function(candidatePassword) {
   return await bcrypt.compare(candidatePassword, this.password);
 };
 
-const User = mongoose.models.User || mongoose.model('User', userSchema);
+const User = mongoose.model('User', userSchema);
 
 module.exports = User; 

@@ -1,47 +1,57 @@
 'use client';
 
-import React, { useState, Suspense } from 'react';
-import { signIn } from 'next-auth/react';
+import React, { useState, useEffect } from 'react';
+import { signIn, useSession } from 'next-auth/react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 
-// Component that uses searchParams
-function SignInForm() {
+export default function SignIn() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
   
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  });
+  const [formData, setFormData] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
 
+  // Auto-redirect if already logged in
+  useEffect(() => {
+    if (status === 'authenticated' && session) {
+      console.log('User authenticated, redirecting to:', callbackUrl);
+      
+      // Handle absolute URLs (including protocol)
+      if (callbackUrl.includes('://') || callbackUrl.startsWith('//')) {
+        window.location.href = callbackUrl;
+      } else {
+        router.replace(callbackUrl);
+      }
+    }
+  }, [status, session, callbackUrl, router]);
+
   const handleChange = (e) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    if (loading) return;
+    
     setError('');
     setLoading(true);
 
     try {
       const { email, password } = formData;
       
-      // Validate form
       if (!email || !password) {
         setError('Please enter both email and password');
         setLoading(false);
         return;
       }
 
-      // Sign in with NextAuth
+      console.log('Attempting sign in, will redirect to:', callbackUrl);
+      
       const result = await signIn('credentials', {
         redirect: false,
         email,
@@ -50,16 +60,30 @@ function SignInForm() {
 
       if (result?.error) {
         setError(result.error);
-      } else {
-        router.push(callbackUrl);
+        setLoading(false);
       }
+      // Success case is handled by the useEffect above when session changes
+      
     } catch (error) {
       setError('Something went wrong. Please try again.');
       console.error('Sign in error:', error);
-    } finally {
       setLoading(false);
     }
   };
+
+  // If already logged in, show a loading spinner
+  if (status === 'loading' || (status === 'authenticated' && session)) {
+    return (
+      <div className="min-h-screen bg-[#121212] flex items-center justify-center">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[rgba(9,203,177,0.823)] border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" role="status">
+            <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">Loading...</span>
+          </div>
+          <p className="mt-2 text-[#bbb]">Loading...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-[#121212]">
@@ -135,23 +159,5 @@ function SignInForm() {
         </div>
       </div>
     </div>
-  );
-}
-
-// Main component with Suspense boundary
-export default function SignIn() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-[#121212] flex items-center justify-center">
-        <div className="text-center">
-          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[rgba(9,203,177,0.823)] border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" role="status">
-            <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">Loading...</span>
-          </div>
-          <p className="mt-2 text-[#bbb]">Loading...</p>
-        </div>
-      </div>
-    }>
-      <SignInForm />
-    </Suspense>
   );
 } 

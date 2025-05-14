@@ -32,7 +32,11 @@ const ModernNavbar = ({ darkMode, toggleDarkMode }) => {
   };
 
   return (
-    <nav className={`w-full fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${scrolled ? 'backdrop-blur-lg bg-[#1e1e1e]/90' : 'bg-[#1e1e1e]'} ${darkMode ? 'border-[#333]' : 'border-gray-200'} border-b`}>
+    <nav className={`w-full fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
+      darkMode 
+        ? (scrolled ? 'backdrop-blur-lg bg-[#1e1e1e]/90' : 'bg-[#1e1e1e]') 
+        : (scrolled ? 'backdrop-blur-lg bg-white/90 shadow-sm' : 'bg-white shadow-sm')
+      } ${darkMode ? 'border-[#333]' : 'border-gray-200'} border-b`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           <div className="flex items-center">
@@ -56,20 +60,20 @@ const ModernNavbar = ({ darkMode, toggleDarkMode }) => {
             <div className="flex space-x-6 items-center">
               <Link href="/" className={`${darkMode ? 'text-white' : 'text-gray-700'} hover:text-[rgba(9,203,177,0.823)] transition-colors duration-300 relative group text-sm font-medium`}>
                 Home
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[rgba(9,203,177,0.823)] transition-all duration-300 group-hover:w-full"></span>
+                <span className={`absolute bottom-0 left-0 w-0 h-0.5 ${darkMode ? 'bg-[rgba(9,203,177,0.823)]' : 'bg-gray-500'} transition-all duration-300 group-hover:w-full`}></span>
               </Link>
               <Link href="/todo-list-manager" className={`${darkMode ? 'text-white' : 'text-gray-700'} hover:text-[rgba(9,203,177,0.823)] transition-colors duration-300 relative group text-sm font-medium`}>
                 Tasks
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[rgba(9,203,177,0.823)] transition-all duration-300 group-hover:w-full"></span>
+                <span className={`absolute bottom-0 left-0 w-0 h-0.5 ${darkMode ? 'bg-[rgba(9,203,177,0.823)]' : 'bg-gray-500'} transition-all duration-300 group-hover:w-full`}></span>
               </Link>
               <Link href="/habit-tracker" className={`${darkMode ? 'text-white' : 'text-gray-700'} hover:text-[rgba(9,203,177,0.823)] transition-colors duration-300 relative group text-sm font-medium`}>
                 Habits
-                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[rgba(9,203,177,0.823)] transition-all duration-300 group-hover:w-full"></span>
+                <span className={`absolute bottom-0 left-0 w-0 h-0.5 ${darkMode ? 'bg-[rgba(9,203,177,0.823)]' : 'bg-gray-500'} transition-all duration-300 group-hover:w-full`}></span>
               </Link>
               {session?.user?.role === 'admin' && (
                 <Link href="/administrator" className={`${darkMode ? 'text-white' : 'text-gray-700'} hover:text-[rgba(9,203,177,0.823)] transition-colors duration-300 relative group text-sm font-medium`}>
                   Administrator
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-[rgba(9,203,177,0.823)] transition-all duration-300 group-hover:w-full"></span>
+                  <span className={`absolute bottom-0 left-0 w-0 h-0.5 ${darkMode ? 'bg-[rgba(9,203,177,0.823)]' : 'bg-gray-500'} transition-all duration-300 group-hover:w-full`}></span>
                 </Link>
               )}
             </div>
@@ -86,8 +90,8 @@ const ModernNavbar = ({ darkMode, toggleDarkMode }) => {
                   onClick={() => setIsDropdownOpen(!isDropdownOpen)}
                   className={`flex items-center space-x-2 ${darkMode ? 'bg-[#2a2a2a] hover:bg-[#333]' : 'bg-white hover:bg-gray-100'} px-3 py-2 rounded-lg transition-all duration-300 border ${darkMode ? 'border-[#444]' : 'border-gray-200'} group`}
                 >
-                  <div className="w-8 h-8 bg-[rgba(9,203,177,0.2)] rounded-full flex items-center justify-center">
-                    <span className="text-[rgba(9,203,177,0.823)] text-sm font-semibold">
+                  <div className={`w-8 h-8 ${darkMode ? 'bg-[rgba(9,203,177,0.2)]' : 'bg-purple-100'} rounded-full flex items-center justify-center`}>
+                    <span className={`${darkMode ? 'text-[rgba(9,203,177,0.823)]' : 'text-purple-700'} text-sm font-semibold`}>
                       {session.user.username?.charAt(0).toUpperCase() || 'U'}
                     </span>
                   </div>
@@ -135,7 +139,11 @@ const ModernNavbar = ({ darkMode, toggleDarkMode }) => {
                 </Link>
                 <Link 
                   href="/auth/signup"
-                  className={`text-sm font-medium bg-[rgba(9,203,177,0.2)] hover:bg-[rgba(9,203,177,0.3)] text-[rgba(9,203,177,0.823)] py-2 px-4 rounded-lg transition-colors duration-300`}
+                  className={`text-sm font-medium ${
+                    darkMode 
+                      ? 'bg-[rgba(9,203,177,0.2)] hover:bg-[rgba(9,203,177,0.3)] text-[rgba(9,203,177,0.823)]' 
+                      : 'bg-gray-200 hover:bg-gray-300 text-gray-700'
+                  } py-2 px-4 rounded-lg transition-colors duration-300`}
                 >
                   Sign Up
                 </Link>
@@ -148,7 +156,11 @@ const ModernNavbar = ({ darkMode, toggleDarkMode }) => {
             <ThemeToggle darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className={`${darkMode ? 'bg-[#2a2a2a] text-white' : 'bg-white text-gray-700'} p-2 rounded-md focus:outline-none`}
+              className={`${
+                darkMode 
+                  ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' 
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              } p-2 rounded-md focus:outline-none transition-colors`}
             >
               {isMobileMenuOpen ? (
                 <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">

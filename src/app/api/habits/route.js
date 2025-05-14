@@ -77,6 +77,11 @@ export async function POST(req) {
     if (!data.currentStreak) data.currentStreak = 0;
     if (!data.longestStreak) data.longestStreak = 0;
 
+    // Ensure new habits participate in public marathon by default
+    if (data.participateInMarathon === undefined) {
+      data.participateInMarathon = true;
+    }
+
     // Check if habit was created from a template
     if (data.templateId) {
       try {

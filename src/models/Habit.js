@@ -79,6 +79,10 @@ const habitSchema = new mongoose.Schema({
       }
     }
   ],
+  participateInMarathon: {
+    type: Boolean,
+    default: true
+  },
   marathons: [
     {
       marathonId: {

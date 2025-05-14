@@ -27,6 +27,21 @@ body {
   color: var(--foreground);
 }
 
+/* Custom checkbox styles for RBAC matrix */
+.rbac-checkbox {
+  appearance: auto !important;
+  -webkit-appearance: checkbox !important;
+  -moz-appearance: checkbox !important;
+  width: 16px !important;
+  height: 16px !important;
+  margin: 0 !important;
+}
+
+.rbac-checkbox:checked {
+  background-color: rgba(9, 203, 177, 0.823) !important;
+  border-color: rgba(9, 203, 177, 0.823) !important;
+}
+
 /* Fix for log content rendering */
 .log-content {
   font-family: monospace !important;
@@ -130,6 +145,18 @@ body {
   }
 }
 
+@keyframes pulse-once {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.3);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
 @keyframes rotate-y {
   from {
     transform: rotateY(0deg);
@@ -153,6 +180,10 @@ body {
 
 .animate-pulse-custom {
   animation: pulse 2s infinite;
+}
+
+.animate-pulse-once {
+  animation: pulse-once 0.5s ease-out forwards;
 }
 
 .animate-spin-slow {
@@ -213,4 +244,87 @@ body {
 
 .dark-scrollbar::-webkit-scrollbar-thumb:hover {
   background: #555;
+}
+
+/* Markdown styles */
+.markdown-body {
+  line-height: 1.6;
+}
+
+.markdown-body h1,
+.markdown-body h2,
+.markdown-body h3,
+.markdown-body h4 {
+  margin-top: 1.5em;
+  margin-bottom: 0.5em;
+  font-weight: 600;
+}
+
+.markdown-body h1 {
+  font-size: 1.5rem;
+}
+
+.markdown-body h2 {
+  font-size: 1.3rem;
+}
+
+.markdown-body h3 {
+  font-size: 1.1rem;
+}
+
+.markdown-body ul,
+.markdown-body ol {
+  padding-left: 1.5rem;
+  margin: 0.5rem 0;
+}
+
+.markdown-body li {
+  margin: 0.25rem 0;
+}
+
+.markdown-body pre {
+  border-radius: 0.375rem;
+  overflow: auto;
+}
+
+.markdown-body code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}
+
+.markdown-body p {
+  margin: 0.75rem 0;
+}
+
+.markdown-body blockquote {
+  border-left-width: 4px;
+  padding-left: 1rem;
+  font-style: italic;
+  margin: 1rem 0;
+}
+
+.markdown-body a {
+  text-decoration: underline;
+}
+
+.markdown-body table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1rem 0;
+}
+
+.markdown-body.dark-mode {
+  color: #e0e0e0;
+}
+
+.markdown-body.light-mode {
+  color: #333;
+}
+
+.key-term {
+  font-weight: bold;
+  color: #09cbb1d2;
+}
+
+.light-mode .key-term {
+  color: #111827;
 }

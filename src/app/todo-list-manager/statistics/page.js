@@ -9,8 +9,9 @@ const StatisticsDashboard = () => {
   const { data: session } = useSession();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [timeRange, setTimeRange] = useState('7days');
+  const [timeRange, setTimeRange] = useState('all');
   const [statistics, setStatistics] = useState(null);
+  const [activeTab, setActiveTab] = useState('overview');
 
   useEffect(() => {
     const loadTasks = async () => {
@@ -137,13 +138,29 @@ const StatisticsDashboard = () => {
       return acc;
     }, { overdue: 0, dueSoon: 0, future: 0 });
 
+    // Tasks by status over time (for trend analysis)
+    const statusByDay = {};
+    filteredTasks.forEach(task => {
+      const startDate = new Date(task.startDate).toISOString().split('T')[0];
+      if (!statusByDay[startDate]) {
+        statusByDay[startDate] = {
+          'Pending': 0,
+          'In Progress': 0,
+          'Completed': 0,
+          'Awaiting': 0
+        };
+      }
+      statusByDay[startDate][task.status] = (statusByDay[startDate][task.status] || 0) + 1;
+    });
+
     return {
       statusCounts,
       ownerDistribution,
       completionRate,
       avgCommentsPerTask,
       dueDateStats,
-      totalTasks
+      totalTasks,
+      statusByDay
     };
   };
 
@@ -157,22 +174,299 @@ const StatisticsDashboard = () => {
     ownerDistribution: calculatedStats?.ownerDistribution || {},
     completionRate: calculatedStats?.completionRate || 0,
     avgCommentsPerTask: calculatedStats?.avgCommentsPerTask || 0,
-    dueDateStats: calculatedStats?.dueDateStats || { overdue: 0, dueSoon: 0, future: 0 }
+    dueDateStats: calculatedStats?.dueDateStats || { overdue: 0, dueSoon: 0, future: 0 },
+    statusByDay: calculatedStats?.statusByDay || {}
   };
 
-  const StatCard = ({ title, value, color = 'text-[rgba(9,203,177,0.823)]' }) => (
-    <div className="bg-[#1e1e1e] p-4 rounded-lg border border-[#444]">
-      <h3 className="text-[#e0e0e0] text-sm mb-1">{title}</h3>
-      <p className={`text-2xl font-semibold ${color}`}>{value}</p>
+  // Get status color
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Pending':
+        return 'bg-red-500';
+      case 'Completed':
+        return 'bg-green-500';
+      case 'In Progress':
+        return 'bg-yellow-500';
+      case 'Awaiting':
+        return 'bg-orange-500';
+      default:
+        return 'bg-blue-500';
+    }
+  };
+
+  const StatCard = ({ title, value, icon, color = 'text-[rgba(9,203,177,0.823)]', bgColor = 'bg-[rgba(9,203,177,0.1)]' }) => (
+    <div className="bg-[#1e1e1e] p-5 rounded-xl border border-[#444] hover:shadow-lg transition-all duration-300 hover:border-[rgba(9,203,177,0.4)]">
+      <div className="flex items-center mb-3">
+        <div className={`${bgColor} p-2 rounded-lg mr-3`}>
+          <span className="text-xl">{icon}</span>
+        </div>
+        <h3 className="text-[#e0e0e0] text-sm">{title}</h3>
+      </div>
+      <p className={`text-3xl font-bold ${color}`}>{value}</p>
     </div>
   );
 
-  const ProgressBar = ({ percentage, color }) => (
-    <div className="w-full bg-[#2a2a2a] rounded-full h-2.5">
-      <div 
-        className={`h-2.5 rounded-full ${color}`}
-        style={{ width: `${percentage}%` }}
-      ></div>
+  const ProgressBar = ({ percentage, color, label, count }) => (
+    <div className="mb-3">
+      <div className="flex justify-between mb-1">
+        <span className="text-sm text-[#e0e0e0]">{label}</span>
+        <span className="text-sm text-[rgba(9,203,177,0.823)]">{count}</span>
+      </div>
+      <div className="w-full bg-[#2a2a2a] rounded-full h-3">
+        <div 
+          className={`h-3 rounded-full ${color}`}
+          style={{ width: `${percentage > 0 ? Math.max(percentage, 3) : 0}%` }}
+        ></div>
+      </div>
+    </div>
+  );
+
+  const CircleProgress = ({ percentage, color, size = 120, strokeWidth = 8, label, value }) => (
+    <div className="flex flex-col items-center">
+      <div className="relative" style={{ width: size, height: size }}>
+        {/* Background circle */}
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+          <circle 
+            cx={size/2} 
+            cy={size/2} 
+            r={(size/2) - (strokeWidth/2)} 
+            fill="none" 
+            stroke="#2a2a2a" 
+            strokeWidth={strokeWidth} 
+          />
+          {/* Progress circle */}
+          <circle 
+            cx={size/2} 
+            cy={size/2} 
+            r={(size/2) - (strokeWidth/2)} 
+            fill="none" 
+            stroke={color === 'green' ? '#10b981' : color === 'red' ? '#ef4444' : color === 'yellow' ? '#f59e0b' : '#3b82f6'} 
+            strokeWidth={strokeWidth} 
+            strokeDasharray={2 * Math.PI * ((size/2) - (strokeWidth/2))}
+            strokeDashoffset={2 * Math.PI * ((size/2) - (strokeWidth/2)) * (1 - percentage / 100)}
+            strokeLinecap="round"
+            transform={`rotate(-90 ${size/2} ${size/2})`}
+          />
+        </svg>
+        <div className="absolute inset-0 flex items-center justify-center flex-col">
+          <span className="text-2xl font-bold text-white">{value}</span>
+          <span className="text-xs text-[#999]">{percentage.toFixed(1)}%</span>
+        </div>
+      </div>
+      <p className="mt-2 text-sm text-center text-[#e0e0e0]">{label}</p>
+    </div>
+  );
+
+  // Tab navigation component
+  const TabNav = () => (
+    <div className="flex border-b border-[#444] mb-6 overflow-x-auto">
+      <button 
+        onClick={() => setActiveTab('overview')}
+        className={`px-4 py-2 font-medium text-sm ${activeTab === 'overview' ? 
+          'text-[rgba(9,203,177,0.823)] border-b-2 border-[rgba(9,203,177,0.823)]' : 
+          'text-[#999] hover:text-white'}`}
+      >
+        Overview
+      </button>
+      <button 
+        onClick={() => setActiveTab('status')}
+        className={`px-4 py-2 font-medium text-sm ${activeTab === 'status' ? 
+          'text-[rgba(9,203,177,0.823)] border-b-2 border-[rgba(9,203,177,0.823)]' : 
+          'text-[#999] hover:text-white'}`}
+      >
+        Status Distribution
+      </button>
+      <button 
+        onClick={() => setActiveTab('due-dates')}
+        className={`px-4 py-2 font-medium text-sm ${activeTab === 'due-dates' ? 
+          'text-[rgba(9,203,177,0.823)] border-b-2 border-[rgba(9,203,177,0.823)]' : 
+          'text-[#999] hover:text-white'}`}
+      >
+        Due Dates
+      </button>
+      <button 
+        onClick={() => setActiveTab('owners')}
+        className={`px-4 py-2 font-medium text-sm ${activeTab === 'owners' ? 
+          'text-[rgba(9,203,177,0.823)] border-b-2 border-[rgba(9,203,177,0.823)]' : 
+          'text-[#999] hover:text-white'}`}
+      >
+        Task Owners
+      </button>
+    </div>
+  );
+
+  // Overview tab content
+  const OverviewTab = () => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <StatCard 
+          title="Total Tasks" 
+          value={safeStats.totalTasks}
+          icon="📊"
+          bgColor="bg-blue-500/10"
+          color="text-blue-400"
+        />
+        <StatCard 
+          title="Completion Rate" 
+          value={`${safeStats.completionRate.toFixed(1)}%`}
+          icon="✅"
+          bgColor="bg-green-500/10"
+          color="text-green-400"
+        />
+        <StatCard 
+          title="Avg Comments" 
+          value={safeStats.avgCommentsPerTask.toFixed(1)}
+          icon="💬"
+          bgColor="bg-purple-500/10"
+          color="text-purple-400"
+        />
+        <StatCard 
+          title="Overdue Tasks" 
+          value={safeStats.dueDateStats.overdue}
+          icon="⏰"
+          bgColor="bg-red-500/10"
+          color="text-red-400"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-[#1e1e1e] p-5 rounded-xl border border-[#444] col-span-2">
+          <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
+            <span className="text-[rgba(9,203,177,0.823)] mr-2">📈</span>
+            Task Status Overview
+          </h2>
+          <div className="space-y-4">
+            {Object.entries(safeStats.statusCounts).map(([status, count]) => (
+              <ProgressBar 
+                key={status}
+                label={status}
+                count={count}
+                percentage={(count / safeStats.totalTasks) * 100} 
+                color={getStatusColor(status)}
+              />
+            ))}
+          </div>
+        </div>
+        
+        <div className="bg-[#1e1e1e] p-5 rounded-xl border border-[#444]">
+          <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
+            <span className="text-[rgba(9,203,177,0.823)] mr-2">🎯</span>
+            Completion Progress
+          </h2>
+          <div className="flex justify-center py-4">
+            <CircleProgress 
+              percentage={safeStats.completionRate} 
+              color="green"
+              value={`${safeStats.completionRate.toFixed(0)}%`}
+              label="Tasks Completed"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Status Distribution tab content
+  const StatusDistributionTab = () => (
+    <div className="space-y-6">
+      <div className="bg-[#1e1e1e] p-5 rounded-xl border border-[#444]">
+        <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
+          <span className="text-[rgba(9,203,177,0.823)] mr-2">📊</span>
+          Status Distribution
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {Object.entries(safeStats.statusCounts).map(([status, count]) => (
+            <div key={status} className="bg-[#2a2a2a] p-4 rounded-lg">
+              <div className={`w-3 h-3 rounded-full ${getStatusColor(status)} mb-2`}></div>
+              <h3 className="text-sm text-[#e0e0e0] mb-1">{status}</h3>
+              <div className="flex items-end justify-between">
+                <p className="text-2xl font-bold text-white">{count}</p>
+                <p className="text-sm text-[#999]">
+                  {safeStats.totalTasks > 0 ? ((count / safeStats.totalTasks) * 100).toFixed(1) : 0}%
+                </p>
+              </div>
+            </div>
+          ))}
+        </div>
+        
+        <div className="mt-6">
+          <div className="flex h-8 rounded-lg overflow-hidden">
+            {Object.entries(safeStats.statusCounts).map(([status, count]) => (
+              <div 
+                key={status} 
+                className={`${getStatusColor(status)} h-full`}
+                style={{ width: `${(count / safeStats.totalTasks) * 100}%` }}
+                title={`${status}: ${count} tasks (${((count / safeStats.totalTasks) * 100).toFixed(1)}%)`}
+              ></div>
+            ))}
+          </div>
+          <div className="flex justify-between mt-2">
+            <div className="text-xs text-[#999]">0%</div>
+            <div className="text-xs text-[#999]">100%</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Due Dates tab content
+  const DueDatesTab = () => (
+    <div className="space-y-6">
+      <div className="bg-[#1e1e1e] p-5 rounded-xl border border-[#444]">
+        <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
+          <span className="text-[rgba(9,203,177,0.823)] mr-2">📅</span>
+          Due Date Breakdown
+        </h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="flex flex-col items-center">
+            <CircleProgress 
+              percentage={(safeStats.dueDateStats.overdue / safeStats.totalTasks) * 100 || 0} 
+              color="red"
+              value={safeStats.dueDateStats.overdue}
+              label="Overdue Tasks"
+            />
+          </div>
+          <div className="flex flex-col items-center">
+            <CircleProgress 
+              percentage={(safeStats.dueDateStats.dueSoon / safeStats.totalTasks) * 100 || 0} 
+              color="yellow"
+              value={safeStats.dueDateStats.dueSoon}
+              label="Due Soon (7 days)"
+            />
+          </div>
+          <div className="flex flex-col items-center">
+            <CircleProgress 
+              percentage={(safeStats.dueDateStats.future / safeStats.totalTasks) * 100 || 0} 
+              color="blue"
+              value={safeStats.dueDateStats.future}
+              label="Future Tasks"
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  // Owners tab content
+  const OwnersTab = () => (
+    <div className="space-y-6">
+      <div className="bg-[#1e1e1e] p-5 rounded-xl border border-[#444]">
+        <h2 className="text-lg font-semibold text-white mb-4 flex items-center">
+          <span className="text-[rgba(9,203,177,0.823)] mr-2">👥</span>
+          Task Distribution by Owner
+        </h2>
+        <div className="space-y-4">
+          {Object.entries(safeStats.ownerDistribution).map(([owner, count]) => (
+            <ProgressBar 
+              key={owner}
+              label={owner || 'Unassigned'}
+              count={count}
+              percentage={(count / safeStats.totalTasks) * 100} 
+              color="bg-blue-500"
+            />
+          ))}
+        </div>
+      </div>
     </div>
   );
 
@@ -180,140 +474,79 @@ const StatisticsDashboard = () => {
     <div className="min-h-screen bg-[#121212] py-10 px-4 sm:px-6 lg:px-8">
       <Navbar />
       
-      <div className="max-w-4xl mx-auto bg-[#1e1e1e] rounded-2xl shadow-lg p-6 border border-[#444] mt-16">
-        <div className="flex justify-between items-center mb-6">
-          <div className="w-1/4">
-            {session && (
-              <p className="text-sm text-[rgba(9,203,177,0.823)]">
-                Welcome, {session.user.username}!
-                <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-[rgba(9,203,177,0.15)]">
-                  {session.user.userProfile === 'work' ? 'Work' : 'Personal'} profile
-                </span>
-              </p>
-            )}
-          </div>
-          <h1 className="text-2xl font-semibold text-white text-center w-2/4">Task Statistics</h1>
-          <div className="w-1/4 flex justify-end">
-            <Link 
-              href="/todo-list-manager" 
-              className="bg-[#1e1e1e] hover:bg-[#2a2a2a] text-[rgba(9,203,177,0.823)] py-2 px-4 rounded border border-[rgba(9,203,177,0.823)] hover:shadow-[0_0_20px_rgba(45,169,164,0.3)] transition-all duration-300"
-            >
-              Back to Tasks
-            </Link>
+      <div className="max-w-6xl mx-auto">
+        {/* Header section with improved styling */}
+        <div className="bg-gradient-to-r from-[#1e1e1e] to-[#2a2a2a] rounded-xl shadow-lg p-6 border border-[#444] mt-16 mb-6">
+          <div className="flex flex-col md:flex-row justify-between items-center gap-4">
+            <div className="flex items-center">
+              <div className="bg-[rgba(9,203,177,0.15)] p-3 rounded-lg mr-4">
+                <span className="text-2xl">📊</span>
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-white">Task Statistics</h1>
+                {session && (
+                  <p className="text-sm text-[rgba(9,203,177,0.823)]">
+                    Welcome, {session.user.username}!
+                    <span className="ml-2 text-xs px-2 py-0.5 rounded-full bg-[rgba(9,203,177,0.15)]">
+                      {session.user.userProfile === 'work' ? 'Work' : 'Personal'} profile
+                    </span>
+                  </p>
+                )}
+              </div>
+            </div>
+            
+            <div className="flex items-center space-x-4">
+              <select
+                value={timeRange}
+                onChange={(e) => setTimeRange(e.target.value)}
+                className="bg-[#2a2a2a] text-[#e0e0e0] py-2 px-4 rounded-lg border border-[#444] focus:outline-none focus:ring-2 focus:ring-[rgba(9,203,177,0.823)]"
+              >
+                <option value="1day">Last 24 Hours</option>
+                <option value="7days">Last 7 Days</option>
+                <option value="1month">Last Month</option>
+                <option value="6months">Last 6 Months</option>
+                <option value="all">All Time</option>
+              </select>
+              
+              <Link 
+                href="/todo-list-manager" 
+                className="bg-[rgba(9,203,177,0.15)] hover:bg-[rgba(9,203,177,0.3)] text-[rgba(9,203,177,0.823)] py-2 px-4 rounded-lg transition-all duration-300 flex items-center"
+              >
+                <span className="mr-2">←</span>
+                Back to Tasks
+              </Link>
+            </div>
           </div>
         </div>
         
-        <div className="mb-6">
-          <select
-            value={timeRange}
-            onChange={(e) => setTimeRange(e.target.value)}
-            className="w-full bg-[#2a2a2a] text-[#e0e0e0] py-1.5 px-4 rounded border border-[#444] focus:outline-none focus:ring-2 focus:ring-[rgba(9,203,177,0.823)]"
-          >
-            <option value="1day">Last 24 Hours</option>
-            <option value="7days">Last 7 Days</option>
-            <option value="1month">Last Month</option>
-            <option value="6months">Last 6 Months</option>
-            <option value="all">All Time</option>
-          </select>
-        </div>
-
         {!session ? (
-          <div className="text-center py-8">
-            <p className="text-[#bbb] mb-4">Please log in to view your task statistics</p>
+          <div className="bg-[#1e1e1e] rounded-xl shadow-lg p-8 border border-[#444] text-center">
+            <div className="bg-[rgba(9,203,177,0.05)] rounded-full w-20 h-20 mx-auto flex items-center justify-center mb-4">
+              <span className="text-3xl">🔒</span>
+            </div>
+            <h2 className="text-xl font-semibold text-white mb-4">Authentication Required</h2>
+            <p className="text-[#bbb] mb-6">Please log in to view your task statistics</p>
             <Link
               href="/auth/signin?callbackUrl=/todo-list-manager/statistics"
-              className="bg-[rgba(9,203,177,0.15)] hover:bg-[rgba(9,203,177,0.3)] text-[rgba(9,203,177,0.823)] px-6 py-2 rounded-lg transition-colors"
+              className="bg-[rgba(9,203,177,0.15)] hover:bg-[rgba(9,203,177,0.3)] text-[rgba(9,203,177,0.823)] px-6 py-3 rounded-lg transition-all duration-300 inline-flex items-center"
             >
+              <span className="mr-2">🔑</span>
               Sign In
             </Link>
           </div>
         ) : loading ? (
-          <div className="text-center py-8">
-            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-[rgba(9,203,177,0.823)] border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite]" role="status">
-              <span className="!absolute !-m-px !h-px !w-px !overflow-hidden !whitespace-nowrap !border-0 !p-0 ![clip:rect(0,0,0,0)]">Loading...</span>
-            </div>
-            <p className="mt-2 text-[#bbb]">Loading statistics from MongoDB...</p>
+          <div className="bg-[#1e1e1e] rounded-xl shadow-lg p-8 border border-[#444] text-center">
+            <div className="inline-block h-12 w-12 animate-spin rounded-full border-4 border-solid border-[rgba(9,203,177,0.823)] border-r-transparent align-[-0.125em] motion-reduce:animate-[spin_1.5s_linear_infinite] mb-4"></div>
+            <p className="text-[#bbb]">Loading your statistics...</p>
           </div>
         ) : (
-          <div className="space-y-6">
-            {/* Overview Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <StatCard 
-                title="Total Tasks" 
-                value={safeStats.totalTasks} 
-              />
-              <StatCard 
-                title="Completion Rate" 
-                value={`${safeStats.completionRate.toFixed(1)}%`} 
-                color="text-green-500"
-              />
-              <StatCard 
-                title="Avg Comments/Task" 
-                value={safeStats.avgCommentsPerTask.toFixed(1)} 
-                color="text-blue-500"
-              />
-              <StatCard 
-                title="Overdue Tasks" 
-                value={safeStats.dueDateStats.overdue} 
-                color="text-red-500"
-              />
-            </div>
-
-            {/* Status Distribution */}
-            <div className="bg-[#2a2a2a] p-6 rounded-lg border border-[#444]">
-              <h2 className="text-xl font-semibold text-white mb-4">Status Distribution</h2>
-              <div className="space-y-4">
-                {Object.entries(safeStats.statusCounts).map(([status, count]) => (
-                  <div key={status}>
-                    <div className="flex justify-between mb-1">
-                      <span className="text-[#e0e0e0]">{status}</span>
-                      <span className="text-[rgba(9,203,177,0.823)]">{count}</span>
-                    </div>
-                    <ProgressBar 
-                      percentage={(count / safeStats.totalTasks) * 100} 
-                      color="bg-[rgba(9,203,177,0.823)]"
-                    />
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Due Date Stats */}
-            <div className="bg-[#2a2a2a] p-6 rounded-lg border border-[#444]">
-              <h2 className="text-xl font-semibold text-white mb-4">Due Date Breakdown</h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <h3 className="text-[#e0e0e0] mb-1">Overdue</h3>
-                  <div className="flex justify-between items-center">
-                    <span className="text-2xl font-semibold text-red-500">{safeStats.dueDateStats.overdue}</span>
-                    <ProgressBar 
-                      percentage={(safeStats.dueDateStats.overdue / safeStats.totalTasks) * 100} 
-                      color="bg-red-500"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-[#e0e0e0] mb-1">Due Soon (7 days)</h3>
-                  <div className="flex justify-between items-center">
-                    <span className="text-2xl font-semibold text-yellow-500">{safeStats.dueDateStats.dueSoon}</span>
-                    <ProgressBar 
-                      percentage={(safeStats.dueDateStats.dueSoon / safeStats.totalTasks) * 100} 
-                      color="bg-yellow-500"
-                    />
-                  </div>
-                </div>
-                <div>
-                  <h3 className="text-[#e0e0e0] mb-1">Future</h3>
-                  <div className="flex justify-between items-center">
-                    <span className="text-2xl font-semibold text-blue-500">{safeStats.dueDateStats.future}</span>
-                    <ProgressBar 
-                      percentage={(safeStats.dueDateStats.future / safeStats.totalTasks) * 100} 
-                      color="bg-blue-500"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+          <div className="bg-[#1e1e1e] rounded-xl shadow-lg p-6 border border-[#444]">
+            <TabNav />
+            
+            {activeTab === 'overview' && <OverviewTab />}
+            {activeTab === 'status' && <StatusDistributionTab />}
+            {activeTab === 'due-dates' && <DueDatesTab />}
+            {activeTab === 'owners' && <OwnersTab />}
           </div>
         )}
       </div>

@@ -18,7 +18,8 @@ export default function ManageHabits() {
     icon: '',
     color: '',
     frequency: 'daily',
-    targetDaysPerWeek: 7
+    targetDaysPerWeek: 7,
+    participateInMarathon: false
   });
 
   // Icon and color options
@@ -98,6 +99,25 @@ export default function ManageHabits() {
     }
   };
 
+  // Toggle public marathon participation directly from card
+  const handleToggleParticipation = async (habit) => {
+    const newValue = !habit.participateInMarathon;
+    try {
+      const res = await fetch('/api/habits', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ _id: habit._id, participateInMarathon: newValue })
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Failed to update participation');
+      toast.success('Habit updated successfully');
+      setHabits(prev => prev.map(h => h._id === habit._id ? data : h));
+    } catch (error) {
+      console.error('Error updating participation:', error);
+      toast.error(error.message || 'Error updating habit participation');
+    }
+  };
+
   const handleEditHabit = (habit) => {
     setEditingHabit(habit);
     setHabitForm({
@@ -106,15 +126,16 @@ export default function ManageHabits() {
       icon: habit.icon,
       color: habit.color,
       frequency: habit.frequency,
-      targetDaysPerWeek: habit.targetDaysPerWeek
+      targetDaysPerWeek: habit.targetDaysPerWeek,
+      participateInMarathon: habit.participateInMarathon || false
     });
   };
 
   const handleFormChange = (e) => {
-    const { name, value } = e.target;
+    const { name, type, value, checked } = e.target;
     setHabitForm(prev => ({
       ...prev,
-      [name]: value
+      [name]: type === 'checkbox' ? checked : value
     }));
   };
 
@@ -320,6 +341,16 @@ export default function ManageHabits() {
                           </div>
                         </div>
                         
+                        {/* Public Marathon Participation Toggle */}
+                        <button
+                          onClick={() => handleToggleParticipation(habit)}
+                          className={`mb-4 px-3 py-1 rounded text-white ${habit.participateInMarathon ? (darkMode ? 'bg-gray-600 hover:bg-gray-700' : 'bg-gray-500 hover:bg-gray-600') : 'bg-green-500 hover:bg-green-600'}`}
+                        >
+                          {habit.participateInMarathon
+                            ? 'Leave Public Marathon'
+                            : 'Join Public Marathon'}
+                        </button>
+                        
                         <div className="flex space-x-2">
                           <button
                             onClick={() => handleEditHabit(habit)}
@@ -495,6 +526,26 @@ export default function ManageHabits() {
                     />
                   </div>
                 )}
+                
+                {/* Public Marathon Participation Toggle */}
+                <div className="mb-4 flex items-center">
+                  <input
+                    type="checkbox"
+                    name="participateInMarathon"
+                    id="participateInMarathon"
+                    checked={habitForm.participateInMarathon}
+                    onChange={handleFormChange}
+                    className="h-4 w-4 text-purple-600 border-gray-300 rounded"
+                  />
+                  <label
+                    htmlFor="participateInMarathon"
+                    className={`ml-2 text-sm ${darkMode ? 'text-[#bbb]' : 'text-gray-600'}`}
+                  >
+                    {habitForm.participateInMarathon
+                      ? "Don't Participate in Public Marathon"
+                      : 'Participate in Public Marathon'}
+                  </label>
+                </div>
                 
                 <div className="flex justify-end space-x-2 mt-6">
                   <button

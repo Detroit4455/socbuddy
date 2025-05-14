@@ -6,6 +6,13 @@ import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import Navbar from '@/components/Navbar';
 import ThemeToggle from '@/components/ThemeToggle';
+import SidebarItem from '@/components/SidebarItem';
+import DashboardContent from '@/components/DashboardContent';
+import HabitRepositoryContent from '@/components/HabitRepositoryContent';
+import MarathonSettingsContent from '@/components/MarathonSettingsContent';
+import NotificationSettingsContent from '@/components/NotificationSettingsContent';
+import SiteManagementContent from '@/components/SiteManagementContent';
+import RBACContent from '@/components/RBACContent';
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -31,6 +38,24 @@ export default function AdminDashboard() {
   const [importJsonVisible, setImportJsonVisible] = useState(false);
   const [jsonInput, setJsonInput] = useState('');
   const [importResults, setImportResults] = useState(null);
+
+  // State for public marathon threshold setting
+  const [threshold, setThreshold] = useState(10);
+  const [description, setDescription] = useState('');
+  const [loadedThreshold, setLoadedThreshold] = useState(10);
+  const [loadedDescription, setLoadedDescription] = useState('');
+  const [isEditingSettings, setIsEditingSettings] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  const [saveSuccess, setSaveSuccess] = useState(false);
+
+  // Add a new state for notification settings
+  const [notificationSettings, setNotificationSettings] = useState({
+    habitNotificationsEnabled: true,
+    isLoading: false,
+    error: '',
+    success: false
+  });
 
   // Check if user has admin role
   useEffect(() => {
@@ -59,12 +84,122 @@ export default function AdminDashboard() {
       loadHabitTemplates();
     }
   }, [activeSection]);
+
+  // Fetch public marathon threshold when section is active
+  useEffect(() => {
+    if (activeSection === 'public-marathon-settings') {
+      fetch('/api/settings/public-marathon-threshold')
+        .then(res => res.json())
+        .then(data => {
+          if (data.threshold !== undefined) {
+            setThreshold(data.threshold);
+            setLoadedThreshold(data.threshold);
+          }
+          if (data.description !== undefined) {
+            setDescription(data.description);
+            setLoadedDescription(data.description);
+          }
+          setIsEditingSettings(false);
+        })
+        .catch(() => setSaveError('Failed to load threshold'));
+    }
+  }, [activeSection]);
+  
+  // Add effect to load notification settings when that section is active
+  useEffect(() => {
+    if (activeSection === 'notification-settings') {
+      loadNotificationSettings();
+    }
+  }, [activeSection]);
   
   // Toggle dark mode
   const toggleDarkMode = () => {
     const newMode = !darkMode;
     setDarkMode(newMode);
     localStorage.setItem('darkMode', newMode.toString());
+  };
+  
+  // Function to load notification settings
+  const loadNotificationSettings = async () => {
+    try {
+      console.log("🔧 Loading notification settings...");
+      setNotificationSettings(prev => ({ ...prev, isLoading: true, error: '' }));
+      
+      const response = await fetch('/api/settings/notification');
+      
+      console.log("🔧 Settings response status:", response.status);
+      const data = await response.json();
+      console.log("🔧 Settings data received:", data);
+      
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to load notification settings');
+      }
+      
+      // Ensure value is boolean
+      const enabledValue = data.value === true || data.value === 'true' || data.value === 1;
+      console.log("🔧 Setting enabled value:", enabledValue, "type:", typeof enabledValue);
+      
+      setNotificationSettings(prev => ({
+        ...prev,
+        habitNotificationsEnabled: enabledValue,
+        isLoading: false
+      }));
+      
+      console.log("🔧 Notification settings loaded and state updated");
+    } catch (error) {
+      console.error('🔧 Error loading notification settings:', error);
+      setNotificationSettings(prev => ({
+        ...prev,
+        error: error.message || 'Failed to load notification settings',
+        isLoading: false
+      }));
+    }
+  };
+  
+  // Function to update notification settings
+  const updateNotificationSettings = async (enabled) => {
+    try {
+      console.log("🔧 Updating notification settings to:", enabled);
+      setNotificationSettings(prev => ({ ...prev, isLoading: true, error: '', success: false }));
+      
+      // Convert to a strict boolean value to ensure it's properly handled
+      const enabledBool = enabled === true;
+      
+      const response = await fetch('/api/settings/notification', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ enabled: enabledBool })
+      });
+      
+      const responseData = await response.json();
+      console.log("🔧 Response status:", response.status);
+      console.log("🔧 Response data:", responseData);
+      
+      if (!response.ok) {
+        throw new Error(responseData.error || 'Failed to update notification settings');
+      }
+      
+      console.log("🔧 Setting update successful, updating UI state");
+      setNotificationSettings(prev => ({
+        ...prev,
+        habitNotificationsEnabled: enabled,
+        isLoading: false,
+        success: true
+      }));
+      
+      // Auto-hide success message after 3 seconds
+      setTimeout(() => {
+        setNotificationSettings(prev => ({ ...prev, success: false }));
+      }, 3000);
+      
+    } catch (error) {
+      console.error('🔧 Error updating notification settings:', error);
+      setNotificationSettings(prev => ({
+        ...prev,
+        error: error.message || 'Failed to update notification settings',
+        isLoading: false
+      }));
+    }
   };
   
   // Load habit templates from API
@@ -259,6 +394,30 @@ export default function AdminDashboard() {
     setSelectedTemplate(null);
   };
   
+  // Handler for saving threshold
+  const handleSaveThreshold = async () => {
+    setIsSaving(true);
+    setSaveError('');
+    setSaveSuccess(false);
+    try {
+      const res = await fetch('/api/settings/public-marathon-threshold', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ threshold, description }),
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json.error || 'Failed to save settings');
+      setLoadedThreshold(json.threshold);
+      setLoadedDescription(json.description);
+      setIsEditingSettings(false);
+      setSaveSuccess(true);
+    } catch (err) {
+      setSaveError(err.message);
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
   // If loading or not authenticated, show loading state
   if (status === 'loading' || (status === 'authenticated' && session?.user?.role !== 'admin')) {
   return (
@@ -275,489 +434,186 @@ export default function AdminDashboard() {
 
   return (
     <div className={`min-h-screen ${darkMode ? 'bg-[#121212] text-white' : 'bg-gray-50 text-gray-900'}`}>
-      <Navbar />
+      {/* Theme toggle button */}
+      <div className="fixed right-4 top-4 z-50">
+        <ThemeToggle darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
+      </div>
       
-      <div className="flex pt-16">
-        {/* Left Sidebar Navigation */}
-        <div className={`w-64 fixed h-full ${darkMode ? 'bg-[#1e1e1e] border-r border-[#333]' : 'bg-white border-r border-gray-200'} p-4`}>
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl font-bold text-[rgba(9,203,177,0.823)]">Admin Panel</h2>
-            <ThemeToggle darkMode={darkMode} toggleDarkMode={toggleDarkMode} />
-              </div>
-
-          <nav>
-            <ul className="space-y-2">
-              <li>
-                <button 
-                  onClick={() => setActiveSection('dashboard')}
-                  className={`w-full text-left px-4 py-2 rounded transition-colors ${
-                    activeSection === 'dashboard' 
-                      ? 'bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)]' 
-                      : darkMode ? 'hover:bg-[#2a2a2a]' : 'hover:bg-gray-100'
-                  }`}
-                >
-                  Dashboard
-                </button>
-              </li>
-              <li>
-                <button 
-                  onClick={() => setActiveSection('users')}
-                  className={`w-full text-left px-4 py-2 rounded transition-colors ${
-                    activeSection === 'users' 
-                      ? 'bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)]' 
-                      : darkMode ? 'hover:bg-[#2a2a2a]' : 'hover:bg-gray-100'
-                  }`}
-                >
-                  User Management
-                </button>
-              </li>
+      <div className="flex">
+        {/* Sidebar */}
+        <div className={`w-64 fixed h-full ${darkMode ? 'bg-[#1e1e1e] border-r border-[#333]' : 'bg-white border-r border-gray-200'}`}>
+          <div className="px-6 py-4">
+            <Link href="/" className="flex items-center space-x-2 mb-6">
+              <img 
+                src="/ICON.svg" 
+                alt="SocBuddy Logo" 
+                className="w-8 h-8"
+              />
+              <span className="text-lg font-bold text-[rgba(9,203,177,0.823)]">Admin Portal</span>
+            </Link>
+            
+            <div className="space-y-1">
+              <SidebarItem 
+                label="Dashboard"
+                icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                      </svg>}
+                active={activeSection === 'dashboard'}
+                onClick={() => setActiveSection('dashboard')}
+                darkMode={darkMode}
+              />
               
-              {/* Habit Tracker Section */}
-              <li className="pt-4">
-                <div className={`px-4 py-2 text-sm font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  Habit Tracker
-                </div>
-                <ul className="ml-2 space-y-1 mt-1">
-                  <li>
-                    <button 
-                      onClick={() => setActiveSection('habit-overview')}
-                      className={`w-full text-left px-4 py-2 rounded transition-colors ${
-                        activeSection === 'habit-overview' 
-                          ? 'bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)]' 
-                          : darkMode ? 'hover:bg-[#2a2a2a]' : 'hover:bg-gray-100'
-                      }`}
-                    >
-                      Overview
-                    </button>
-                  </li>
-                  <li>
-                    <button 
-                      onClick={() => setActiveSection('habit-analytics')}
-                      className={`w-full text-left px-4 py-2 rounded transition-colors ${
-                        activeSection === 'habit-analytics' 
-                          ? 'bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)]' 
-                          : darkMode ? 'hover:bg-[#2a2a2a]' : 'hover:bg-gray-100'
-                      }`}
-                    >
-                      Analytics
-                    </button>
-                  </li>
-                  <li>
-                <button 
-                      onClick={() => setActiveSection('habit-repository')}
-                      className={`w-full text-left px-4 py-2 rounded transition-colors ${
-                        activeSection === 'habit-repository' 
-                          ? 'bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)]' 
-                          : darkMode ? 'hover:bg-[#2a2a2a]' : 'hover:bg-gray-100'
-                      }`}
-                    >
-                      Repository
-                </button>
-                  </li>
-                </ul>
-              </li>
+              <SidebarItem 
+                label="RBAC Management"
+                icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                      </svg>}
+                active={activeSection === 'rbac'}
+                onClick={() => setActiveSection('rbac')}
+                darkMode={darkMode}
+              />
               
-              {/* Tasks Section */}
-              <li className="pt-4">
-                <div className={`px-4 py-2 text-sm font-semibold ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                  Task Management
-                  </div>
-                <ul className="ml-2 space-y-1 mt-1">
-                  <li>
-                    <button 
-                      onClick={() => setActiveSection('task-overview')}
-                      className={`w-full text-left px-4 py-2 rounded transition-colors ${
-                        activeSection === 'task-overview' 
-                          ? 'bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)]' 
-                          : darkMode ? 'hover:bg-[#2a2a2a]' : 'hover:bg-gray-100'
-                      }`}
-                    >
-                      Overview
-                    </button>
-                  </li>
-                  <li>
-                    <button 
-                      onClick={() => setActiveSection('task-analytics')}
-                      className={`w-full text-left px-4 py-2 rounded transition-colors ${
-                        activeSection === 'task-analytics' 
-                          ? 'bg-[rgba(9,203,177,0.15)] text-[rgba(9,203,177,0.823)]' 
-                          : darkMode ? 'hover:bg-[#2a2a2a]' : 'hover:bg-gray-100'
-                      }`}
-                    >
-                      Analytics
-                    </button>
-                  </li>
-                </ul>
-              </li>
+              <SidebarItem 
+                label="User Management"
+                icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                      </svg>}
+                active={activeSection === 'users'}
+                onClick={() => router.push('/admin/users')}
+                darkMode={darkMode}
+              />
               
-              <li className="pt-4">
-                <Link 
-                  href="/administrator"
-                  className={`block px-4 py-2 rounded transition-colors ${
-                    darkMode ? 'hover:bg-[#2a2a2a]' : 'hover:bg-gray-100'
-                  }`}
-                >
-                  Legacy Admin Panel
-                </Link>
-              </li>
-            </ul>
-          </nav>
+              <SidebarItem 
+                label="Habit Repository"
+                icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                      </svg>}
+                active={activeSection === 'habit-repository'}
+                onClick={() => setActiveSection('habit-repository')}
+                darkMode={darkMode}
+              />
+              
+              <SidebarItem 
+                label="Cyber Resources"
+                icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      </svg>}
+                active={activeSection === 'cyber-resources'}
+                onClick={() => router.push('/admin/cyber-resources')}
+                darkMode={darkMode}
+              />
+              
+              <SidebarItem 
+                label="Marathon Settings"
+                icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      </svg>}
+                active={activeSection === 'public-marathon-settings'}
+                onClick={() => setActiveSection('public-marathon-settings')}
+                darkMode={darkMode}
+              />
+              
+              <SidebarItem 
+                label="Notifications"
+                icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                      </svg>}
+                active={activeSection === 'notification-settings'}
+                onClick={() => setActiveSection('notification-settings')}
+                darkMode={darkMode}
+              />
+              
+              <SidebarItem 
+                label="Site Management"
+                icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9a9 9 0 01-9-9m9 9c1.657 0 3-4.03 3-9s-1.343-9-3-9m0 18c-1.657 0-3-4.03-3-9s1.343-9 3-9m-9 9a9 9 0 019-9" />
+                      </svg>}
+                active={activeSection === 'site-management'}
+                onClick={() => setActiveSection('site-management')}
+                darkMode={darkMode}
+              />
+              
+              <SidebarItem 
+                label="Website Map"
+                icon={<svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                      </svg>}
+                active={activeSection === 'website-map'}
+                onClick={() => router.push('/admin/website-map')}
+                darkMode={darkMode}
+              />
+            </div>
+          </div>
         </div>
         
-        {/* Main Content Area */}
+        {/* Main content area */}
         <div className="ml-64 flex-1 p-8">
+          <h1 className="text-3xl font-bold mb-8">{getPageTitle(activeSection)}</h1>
+          
           {activeSection === 'dashboard' && (
-            <div>
-              <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
-              <div className={`p-6 rounded-lg ${darkMode ? 'bg-[#1e1e1e] border border-[#333]' : 'bg-white shadow'}`}>
-                <h2 className="text-xl font-semibold mb-4">Welcome, {session?.user?.username}</h2>
-                <p className="mb-4">This is the admin dashboard where you can manage various aspects of SocBuddy.</p>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                  <StatCard title="Active Users" value="--" darkMode={darkMode} />
-                  <StatCard title="Total Habits" value="--" darkMode={darkMode} />
-                  <StatCard title="Total Tasks" value="--" darkMode={darkMode} />
-                </div>
-              </div>
-            </div>
+            <DashboardContent darkMode={darkMode} />
           )}
           
-          {activeSection === 'habit-overview' && (
-            <div>
-              <h1 className="text-2xl font-bold mb-6">Habit Tracker Overview</h1>
-              <div className={`p-6 rounded-lg ${darkMode ? 'bg-[#1e1e1e] border border-[#333]' : 'bg-white shadow'}`}>
-                <p>Here you can view and manage habits across all users.</p>
-                <div className="mt-6">
-                  <p className="italic">Feature under development.</p>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {activeSection === 'habit-analytics' && (
-            <div>
-              <h1 className="text-2xl font-bold mb-6">Habit Analytics</h1>
-              <div className={`p-6 rounded-lg ${darkMode ? 'bg-[#1e1e1e] border border-[#333]' : 'bg-white shadow'}`}>
-                <p>View statistics and trends for user habits.</p>
-                <div className="mt-6">
-                  <p className="italic">Feature under development.</p>
-                </div>
-              </div>
-                  </div>
+          {activeSection === 'rbac' && (
+            <RBACContent darkMode={darkMode} />
           )}
           
           {activeSection === 'habit-repository' && (
-            <div>
-              <h1 className="text-2xl font-bold mb-6">Habit Repository</h1>
-              
-              {/* Actions Bar with Search and Import */}
-              <div className={`p-4 rounded-lg mb-6 flex flex-col md:flex-row items-center justify-between ${darkMode ? 'bg-[#1e1e1e] border border-[#333]' : 'bg-white shadow'}`}>
-                {/* Search Form */}
-                <form onSubmit={handleSearch} className="w-full md:w-auto mb-4 md:mb-0">
-                  <div className="flex">
-                    <input
-                      type="text"
-                      value={searchTerm}
-                      onChange={handleSearchChange}
-                      placeholder="Search habits or categories..."
-                      className={`p-2 rounded-l border ${
-                        darkMode 
-                          ? 'bg-[#2a2a2a] border-[#444] text-white' 
-                          : 'bg-white border-gray-300'
-                      }`}
-                    />
-                    <button 
-                      type="submit"
-                      className="px-4 py-2 rounded-r bg-[rgba(9,203,177,0.823)] text-white hover:bg-[rgba(9,203,177,0.9)] transition-colors"
-                    >
-                      Search
-                    </button>
-                  </div>
-                </form>
-                
-                {/* Bulk Import Button */}
-                <div className="flex">
-                  <button
-                    type="button"
-                    onClick={() => setImportJsonVisible(!importJsonVisible)}
-                    className={`px-4 py-2 rounded ${
-                      darkMode 
-                        ? 'bg-[#2a2a2a] text-white hover:bg-[#333]' 
-                        : 'bg-gray-100 hover:bg-gray-200'
-                    } transition-colors`}
-                  >
-                    {importJsonVisible ? 'Cancel Import' : 'Bulk Import JSON'}
-                  </button>
-                </div>
-              </div>
-              
-              {/* JSON Import Form */}
-              {importJsonVisible && (
-                <div className={`p-6 rounded-lg mb-6 ${darkMode ? 'bg-[#1e1e1e] border border-[#333]' : 'bg-white shadow'}`}>
-                  <h2 className="text-xl font-semibold mb-4">Import Habit Templates from JSON</h2>
-                  
-                  <p className={`mb-4 ${darkMode ? 'text-gray-300' : 'text-gray-600'}`}>
-                    Paste a JSON array of habit templates in the format:
-                  </p>
-                  
-                  <pre className={`p-3 rounded mb-4 text-sm overflow-x-auto ${
-                    darkMode ? 'bg-[#2a2a2a] text-gray-300' : 'bg-gray-50 text-gray-700'
-                  }`}>
-{`[
-  { "habit": "Meditation", "category": "Wellness", "icon": "🧘", "used_count": 1 },
-  { "habit": "Exercise", "category": "Health", "icon": "🏋️", "used_count": 1 }
-]`}
-                  </pre>
-                  
-                  <form onSubmit={handleJsonImport}>
-                    <textarea
-                      value={jsonInput}
-                      onChange={(e) => setJsonInput(e.target.value)}
-                      rows={10}
-                      className={`w-full p-3 rounded border font-mono ${
-                        darkMode 
-                          ? 'bg-[#2a2a2a] border-[#444] text-white' 
-                          : 'bg-white border-gray-300'
-                      }`}
-                      placeholder="Paste your JSON array here..."
-                      required
-                    />
-                    
-                    <div className="mt-4">
-                      <button
-                        type="submit"
-                        disabled={isLoading}
-                        className={`px-4 py-2 rounded bg-[rgba(9,203,177,0.823)] text-white hover:bg-[rgba(9,203,177,0.9)] transition-colors ${
-                          isLoading ? 'opacity-50 cursor-not-allowed' : ''
-                        }`}
-                      >
-                        {isLoading ? 'Importing...' : 'Import Habits'}
-                      </button>
-                    </div>
-                  </form>
-                  
-                  {importResults && (
-                    <div className={`mt-4 p-3 rounded ${
-                      darkMode ? 'bg-[#2a2a2a]' : 'bg-gray-50'
-                    }`}>
-                      <h3 className="font-semibold mb-2">Import Results:</h3>
-                      <p>✅ Imported: {importResults.imported}</p>
-                      <p>⚠️ Skipped: {importResults.skipped}</p>
-                      
-                      {importResults.skipped > 0 && importResults.skippedItems && (
-                        <div className="mt-2">
-                          <p className="font-semibold">Skipped items:</p>
-                          <ul className="list-disc pl-5 mt-1">
-                            {importResults.skippedItems.map((item, idx) => (
-                              <li key={idx} className="text-sm">
-                                {item.habit}: {item.reason}
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                    </div>
-                  )}
-                </div>
-              )}
-              
-              {/* Form for adding/editing habit templates */}
-              <div className={`p-6 rounded-lg mb-6 ${darkMode ? 'bg-[#1e1e1e] border border-[#333]' : 'bg-white shadow'}`}>
-                <h2 className="text-xl font-semibold mb-4">
-                  {isEditMode ? 'Edit Habit Template' : 'Add New Habit Template'}
-                </h2>
-                
-                {formError && (
-                  <div className="mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                    {formError}
-                  </div>
-                )}
-                
-                {formSuccess && (
-                  <div className="mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-                    {formSuccess}
-                  </div>
-                )}
-                
-                <form onSubmit={handleTemplateSubmit}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                    <div>
-                      <label className={`block mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                        Habit Name <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="habit"
-                        value={templateForm.habit}
-                        onChange={handleInputChange}
-                        required
-                        className={`w-full p-2 rounded border ${
-                          darkMode 
-                            ? 'bg-[#2a2a2a] border-[#444] text-white' 
-                            : 'bg-white border-gray-300'
-                        }`}
-                        placeholder="e.g., Meditation"
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className={`block mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                        Category <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="category"
-                        value={templateForm.category}
-                        onChange={handleInputChange}
-                        required
-                        className={`w-full p-2 rounded border ${
-                          darkMode 
-                            ? 'bg-[#2a2a2a] border-[#444] text-white' 
-                            : 'bg-white border-gray-300'
-                        }`}
-                        placeholder="e.g., Wellness"
-                      />
-                    </div>
-                  </div>
-                  
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-                    <div>
-                      <label className={`block mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                        Icon <span className="text-red-500">*</span>
-                      </label>
-                      <input
-                        type="text"
-                        name="icon"
-                        value={templateForm.icon}
-                        onChange={handleInputChange}
-                        required
-                        className={`w-full p-2 rounded border ${
-                          darkMode 
-                            ? 'bg-[#2a2a2a] border-[#444] text-white' 
-                            : 'bg-white border-gray-300'
-                        }`}
-                        placeholder="e.g., 🧘"
-                      />
-                      <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                        Enter an emoji or symbol to represent this habit
-                      </p>
-                    </div>
-                    
-                    <div>
-                      <label className={`block mb-1 ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                        Used Count
-                      </label>
-                      <input
-                        type="number"
-                        name="used_count"
-                        value={templateForm.used_count}
-                        onChange={handleInputChange}
-                        min="0"
-                        className={`w-full p-2 rounded border ${
-                          darkMode 
-                            ? 'bg-[#2a2a2a] border-[#444] text-white' 
-                            : 'bg-white border-gray-300'
-                        }`}
-                      />
-                      <p className={`text-xs mt-1 ${darkMode ? 'text-gray-400' : 'text-gray-500'}`}>
-                        How many times this habit template has been used
-                      </p>
-                    </div>
-                      </div>
-                      
-                  <div className="flex justify-between">
-                    <div>
-                      <button
-                        type="submit"
-                        disabled={isLoading}
-                        className={`px-4 py-2 rounded bg-[rgba(9,203,177,0.823)] text-white hover:bg-[rgba(9,203,177,0.9)] transition-colors ${
-                          isLoading ? 'opacity-50 cursor-not-allowed' : ''
-                        }`}
-                      >
-                        {isLoading ? 'Saving...' : isEditMode ? 'Update Template' : 'Add Template'}
-                      </button>
-                      
-                      {isEditMode && (
-                          <button
-                          type="button"
-                          onClick={resetForm}
-                          className="ml-2 px-4 py-2 rounded bg-gray-500 text-white hover:bg-gray-600 transition-colors"
-                        >
-                          Cancel
-                          </button>
-                      )}
-                          </div>
-                          
-                    {isEditMode && (
-                          <button
-                        type="button"
-                        onClick={() => handleDeleteTemplate(selectedTemplate._id)}
-                        className="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-600 transition-colors"
-                      >
-                        Delete
-                          </button>
-                  )}
-                </div>
-                </form>
-              </div>
-              
-              {/* List of habit templates */}
-              <div className={`p-6 rounded-lg ${darkMode ? 'bg-[#1e1e1e] border border-[#333]' : 'bg-white shadow'}`}>
-                <h2 className="text-xl font-semibold mb-4">Habit Templates</h2>
-                
-                {isLoading && habitTemplates.length === 0 ? (
-                  <div className="flex justify-center py-8">
-                    <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-[rgba(9,203,177,0.823)]"></div>
-                  </div>
-                ) : habitTemplates.length === 0 ? (
-                  <p className="text-center py-4 italic">No habit templates found. Add your first template above.</p>
-                ) : (
-                      <div className="overflow-x-auto">
-                    <table className={`w-full ${darkMode ? 'text-gray-300' : 'text-gray-700'}`}>
-                      <thead className={darkMode ? 'border-b border-[#444]' : 'border-b'}>
-                        <tr>
-                          <th className="py-2 px-4 text-left">Icon</th>
-                          <th className="py-2 px-4 text-left">Habit</th>
-                          <th className="py-2 px-4 text-left">Category</th>
-                          <th className="py-2 px-4 text-right">Used Count</th>
-                          <th className="py-2 px-4 text-center">Actions</th>
-                            </tr>
-                          </thead>
-                      <tbody>
-                        {habitTemplates.map((template) => (
-                          <tr 
-                            key={template._id} 
-                            className={darkMode ? 'border-b border-[#333] hover:bg-[#2a2a2a]' : 'border-b hover:bg-gray-50'}
-                          >
-                            <td className="py-3 px-4 text-center text-xl">{template.icon}</td>
-                            <td className="py-3 px-4">{template.habit}</td>
-                            <td className="py-3 px-4">{template.category}</td>
-                            <td className="py-3 px-4 text-right">{template.used_count}</td>
-                            <td className="py-3 px-4 text-center">
-                              <button
-                                onClick={() => handleEditTemplate(template)}
-                                className="p-1 text-[rgba(9,203,177,0.823)] hover:text-[rgba(9,203,177,0.9)]"
-                                title="Edit"
-                              >
-                                Edit
-                              </button>
-                            </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                )}
-                      </div>
-                </div>
-              )}
-              
-          {(activeSection === 'users' || activeSection === 'task-overview' || activeSection === 'task-analytics') && (
-            <div>
-              <h1 className="text-2xl font-bold mb-6">{getPageTitle(activeSection)}</h1>
-              <div className={`p-6 rounded-lg ${darkMode ? 'bg-[#1e1e1e] border border-[#333]' : 'bg-white shadow'}`}>
-                <p>This feature is currently under development.</p>
-                </div>
-            </div>
+            <HabitRepositoryContent 
+              darkMode={darkMode} 
+              habitTemplates={habitTemplates}
+              isLoading={isLoading}
+              formError={formError}
+              formSuccess={formSuccess}
+              isEditMode={isEditMode}
+              selectedTemplate={selectedTemplate}
+              templateForm={templateForm}
+              searchTerm={searchTerm}
+              importJsonVisible={importJsonVisible}
+              jsonInput={jsonInput}
+              importResults={importResults}
+              onSearchChange={handleSearchChange}
+              onSearch={handleSearch}
+              onInputChange={handleInputChange}
+              onFormSubmit={handleTemplateSubmit}
+              onEditTemplate={handleEditTemplate}
+              onDeleteTemplate={handleDeleteTemplate}
+              onResetForm={resetForm}
+              setImportJsonVisible={setImportJsonVisible}
+              setJsonInput={setJsonInput}
+              onJsonImport={handleJsonImport}
+            />
+          )}
+          
+          {activeSection === 'public-marathon-settings' && (
+            <MarathonSettingsContent 
+              darkMode={darkMode}
+              threshold={threshold}
+              description={description}
+              loadedThreshold={loadedThreshold}
+              loadedDescription={loadedDescription}
+              isEditingSettings={isEditingSettings}
+              isSaving={isSaving}
+              saveError={saveError}
+              saveSuccess={saveSuccess}
+              setThreshold={setThreshold}
+              setDescription={setDescription}
+              setIsEditingSettings={setIsEditingSettings}
+              onSaveThreshold={handleSaveThreshold}
+            />
+          )}
+          
+          {activeSection === 'notification-settings' && (
+            <NotificationSettingsContent 
+              darkMode={darkMode}
+              notificationSettings={notificationSettings}
+              onUpdateSettings={updateNotificationSettings}
+            />
+          )}
+          
+          {activeSection === 'site-management' && (
+            <SiteManagementContent darkMode={darkMode} />
           )}
         </div>
       </div>
@@ -771,16 +627,7 @@ function getPageTitle(section) {
     case 'users': return 'User Management';
     case 'task-overview': return 'Task Overview';
     case 'task-analytics': return 'Task Analytics';
+    case 'website-map': return 'Website Map';
     default: return 'Admin Dashboard';
   }
-}
-
-// Stat Card Component
-function StatCard({ title, value, darkMode }) {
-  return (
-    <div className={`p-4 rounded-lg ${darkMode ? 'bg-[#2a2a2a]' : 'bg-gray-50 border border-gray-200'}`}>
-      <h3 className="text-sm font-medium text-gray-500">{title}</h3>
-      <p className="text-2xl font-semibold mt-2 text-[rgba(9,203,177,0.823)]">{value}</p>
-    </div>
-  );
 }

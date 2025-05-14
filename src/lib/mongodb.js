@@ -1,5 +1,5 @@
-const mongoose = require('mongoose');
-const { MongoClient } = require('mongodb');
+import mongoose from 'mongoose';
+import { MongoClient } from 'mongodb';
 
 if (!process.env.MONGODB_URI) {
   throw new Error('Invalid/Missing environment variable: "MONGODB_URI"');
@@ -61,7 +61,7 @@ function parseDbInfo(uri) {
   };
 }
 
-async function connectToDatabase() {
+export async function connectToDatabase() {
   if (cachedClient && cachedDb) {
     console.log('[MongoDB] Using cached database connection');
     return { client: cachedClient, db: cachedDb };
@@ -103,7 +103,7 @@ async function connectToDatabase() {
   }
 }
 
-async function connectDB() {
+export async function connectDB() {
   if (isConnected) {
     console.log('[MongoDB] Using existing database connection');
     return dbInfo;
@@ -152,8 +152,6 @@ async function connectDB() {
 }
 
 // Add a function to get DB info without connecting
-function getDbInfo() {
+export function getDbInfo() {
   return dbInfo;
-}
-
-module.exports = { connectDB, getDbInfo, connectToDatabase }; 
+} 
